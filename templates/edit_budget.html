@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block title %}{% if budget %}Edit{% else %}Create{% endif %} Budget - Finance Tracker{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card shadow">
+            <div class="card-header">
+                <h4 class="mb-0">
+                    <i class="bi bi-pie-chart"></i>
+                    {% if budget %}Edit Budget{% else %}Create Budget{% endif %}
+                </h4>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    {{ form.hidden_tag() }}
+
+                    <div class="mb-3">
+                        {{ form.name.label(class="form-label") }}
+                        {{ form.name(class="form-control" + (" is-invalid" if form.name.errors else "")) }}
+                        {% for error in form.name.errors %}
+                        <div class="invalid-feedback">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form.currency.label(class="form-label") }}
+                        {{ form.currency(class="form-select" + (" is-invalid" if form.currency.errors else "")) }}
+                        {% for error in form.currency.errors %}
+                        <div class="invalid-feedback">{{ error }}</div>
+                        {% endfor %}
+                        <small class="form-text text-muted">All budget amounts will be in this currency.</small>
+                    </div>
+
+                    <hr>
+
+                    <h5 class="mb-3">Monthly Expectations</h5>
+
+                    <div class="mb-3">
+                        {{ form.expected_income.label(class="form-label") }}
+                        <div class="input-group">
+                            <span class="input-group-text currency-symbol">$</span>
+                            {{ form.expected_income(class="form-control" + (" is-invalid" if form.expected_income.errors else ""), step="0.01") }}
+                        </div>
+                        {% for error in form.expected_income.errors %}
+                        <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+                        <small class="form-text text-muted">Your total expected monthly income (salary, side income, etc.)</small>
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form.expected_savings.label(class="form-label") }}
+                        <div class="input-group">
+                            <span class="input-group-text currency-symbol">$</span>
+                            {{ form.expected_savings(class="form-control" + (" is-invalid" if form.expected_savings.errors else ""), step="0.01") }}
+                        </div>
+                        {% for error in form.expected_savings.errors %}
+                        <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+                        <small class="form-text text-muted">How much you want to save each month (transfers to savings accounts)</small>
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form.expected_investments.label(class="form-label") }}
+                        <div class="input-group">
+                            <span class="input-group-text currency-symbol">$</span>
+                            {{ form.expected_investments(class="form-control" + (" is-invalid" if form.expected_investments.errors else ""), step="0.01") }}
+                        </div>
+                        {% for error in form.expected_investments.errors %}
+                        <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+                        <small class="form-text text-muted">How much you want to invest each month (401k, stocks, etc.)</small>
+                    </div>
+
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i>
+                        <strong>Note:</strong> After saving these settings, you can add category-specific expense budgets on the Budget page.
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="bi bi-check-lg"></i> Save Budget
+                        </button>
+                        <a href="{{ url_for('budget') }}" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const currencySelect = document.getElementById('currency');
+    const symbols = document.querySelectorAll('.currency-symbol');
+
+    function updateSymbols() {
+        const symbol = currencySelect.value === 'INR' ? '₹' : '$';
+        symbols.forEach(s => s.textContent = symbol);
+    }
+
+    currencySelect.addEventListener('change', updateSymbols);
+    updateSymbols();
+});
+</script>
+{% endblock %}

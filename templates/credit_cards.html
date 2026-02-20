@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+
+{% block title %}Credit Cards - Finance Tracker{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="bi bi-credit-card"></i> Credit Cards</h1>
+    <a href="{{ url_for('add_account') }}" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i> Add Credit Card
+    </a>
+</div>
+
+<!-- Total Balance Card -->
+<div class="card mb-4 border-0 shadow-sm">
+    <div class="card-body bg-gradient {% if total_balance <= 0 %}bg-success{% else %}bg-danger{% endif %} text-white rounded">
+        <div class="row align-items-center">
+            <div class="col">
+                <h6 class="text-uppercase opacity-75 mb-1">Total Credit Card Balance</h6>
+                <h1 class="display-4 mb-0">${{ "%.2f"|format(total_balance|abs) }}</h1>
+                {% if total_balance < 0 %}
+                <small class="opacity-75">Credit available</small>
+                {% elif total_balance > 0 %}
+                <small class="opacity-75">Amount owed</small>
+                {% else %}
+                <small class="opacity-75">No balance</small>
+                {% endif %}
+            </div>
+            <div class="col-auto">
+                <i class="bi bi-credit-card-2-front display-1 opacity-25"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if cards %}
+<!-- Credit Cards List -->
+<div class="row">
+    {% for card in cards %}
+    <div class="col-md-6 col-lg-4 mb-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-header bg-dark text-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-credit-card me-2"></i>{{ card.name }}</span>
+                    <small class="opacity-75">Credit Card</small>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <small class="text-muted d-block">Current Balance</small>
+                    <h2 class="{% if card.current_balance <= 0 %}text-success{% else %}text-danger{% endif %} mb-0">
+                        ${{ "%.2f"|format(card.current_balance|abs) }}
+                    </h2>
+                    {% if card.current_balance < 0 %}
+                    <small class="text-success">Credit</small>
+                    {% elif card.current_balance > 0 %}
+                    <small class="text-danger">Owed</small>
+                    {% endif %}
+                </div>
+                <div class="border-top pt-3">
+                    <div class="row text-center">
+                        <div class="col">
+                            <small class="text-muted d-block">Initial Balance</small>
+                            <strong>${{ "%.2f"|format(card.initial_balance) }}</strong>
+                        </div>
+                        <div class="col">
+                            <small class="text-muted d-block">Transactions</small>
+                            <strong>{{ card.transactions.count() }}</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer bg-white border-top-0">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('account_detail', account_id=card.id) }}" class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-list-ul"></i> View Transactions
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Summary Table -->
+<div class="card mt-4">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="bi bi-table"></i> Summary</h5>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Card Name</th>
+                    <th class="text-end">Balance</th>
+                    <th class="text-end">Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for card in cards %}
+                <tr>
+                    <td>
+                        <i class="bi bi-credit-card text-primary me-2"></i>
+                        {{ card.name }}
+                    </td>
+                    <td class="text-end {% if card.current_balance <= 0 %}text-success{% else %}text-danger{% endif %}">
+                        ${{ "%.2f"|format(card.current_balance|abs) }}
+                    </td>
+                    <td class="text-end">
+                        {% if card.current_balance < 0 %}
+                        <span class="badge bg-success">Credit</span>
+                        {% elif card.current_balance > 0 %}
+                        <span class="badge bg-danger">Owed</span>
+                        {% else %}
+                        <span class="badge bg-secondary">Paid Off</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot class="table-light">
+                <tr>
+                    <th>Total</th>
+                    <th class="text-end {% if total_balance <= 0 %}text-success{% else %}text-danger{% endif %}">
+                        ${{ "%.2f"|format(total_balance|abs) }}
+                    </th>
+                    <th></th>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+</div>
+
+{% else %}
+<div class="text-center py-5">
+    <i class="bi bi-credit-card fs-1 text-muted"></i>
+    <h4 class="mt-3">No credit cards yet</h4>
+    <p class="text-muted">Add your first credit card to start tracking balances.</p>
+    <a href="{{ url_for('add_account') }}" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i> Add Credit Card
+    </a>
+</div>
+{% endif %}
+{% endblock %}

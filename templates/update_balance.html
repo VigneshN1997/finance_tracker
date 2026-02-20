@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}Update Balance - Finance Tracker{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card shadow">
+            <div class="card-header">
+                <h4 class="mb-0"><i class="bi bi-pencil-square"></i> Update Investment Balance</h4>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i>
+                    <strong>{{ account.name }}</strong> ({{ account.currency }})<br>
+                    <small>Current Balance: {{ account.currency_symbol }}{{ "{:,.2f}".format(account.current_balance) }}</small>
+                    {% if account.currency == 'USD' %}
+                    <br><small class="text-muted">≈ ₹{{ "{:,.2f}".format(convert_currency(account.current_balance, 'USD', 'INR')) }} INR</small>
+                    {% else %}
+                    <br><small class="text-muted">≈ ${{ "{:,.2f}".format(convert_currency(account.current_balance, 'INR', 'USD')) }} USD</small>
+                    {% endif %}
+                </div>
+
+                <form method="POST" novalidate>
+                    {{ form.hidden_tag() }}
+
+                    <div class="mb-3">
+                        <label for="new_balance" class="form-label">New Balance</label>
+                        <div class="input-group">
+                            <span class="input-group-text" id="currency-symbol">$</span>
+                            {{ form.new_balance(class="form-control" + (" is-invalid" if form.new_balance.errors else ""), placeholder="0.00") }}
+                            {{ form.input_currency(class="form-select", style="max-width: 120px;", id="input-currency") }}
+                            {% for error in form.new_balance.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        <div class="form-text">
+                            Enter the current market value. If you enter in a different currency, it will be converted to {{ account.currency }}.
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle"></i> Update Balance
+                        </button>
+                        <a href="{{ url_for('account_detail', account_id=account.id) }}" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const currencySelect = document.getElementById('input-currency');
+    const currencySymbol = document.getElementById('currency-symbol');
+
+    function updateSymbol() {
+        if (currencySelect.value === 'INR') {
+            currencySymbol.textContent = '₹';
+        } else {
+            currencySymbol.textContent = '$';
+        }
+    }
+
+    currencySelect.addEventListener('change', updateSymbol);
+    updateSymbol();
+});
+</script>
+{% endblock %}

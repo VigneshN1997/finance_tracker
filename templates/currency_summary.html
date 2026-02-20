@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+
+{% block title %}Currency Summary - Finance Tracker{% endblock %}
+
+{% block content %}
+<h1 class="mb-4"><i class="bi bi-currency-exchange"></i> Currency Summary</h1>
+
+<!-- Exchange Rate Info -->
+<div class="alert alert-info mb-4">
+    <i class="bi bi-info-circle"></i>
+    <strong>Current Exchange Rate:</strong> 1 USD = {{ "%.2f"|format(exchange_rate) }} INR
+    <small class="text-muted">(Rate updates hourly)</small>
+</div>
+
+<!-- Net Worth Cards -->
+<div class="row mb-4">
+    <div class="col-md-6 mb-3">
+        <div class="card bg-primary text-white h-100">
+            <div class="card-body">
+                <h6 class="card-subtitle mb-2 opacity-75">Total Net Worth (USD)</h6>
+                <h2 class="card-title mb-0">${{ "%.2f"|format(total_in_usd) }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 mb-3">
+        <div class="card bg-warning text-dark h-100">
+            <div class="card-body">
+                <h6 class="card-subtitle mb-2 opacity-75">Total Net Worth (INR)</h6>
+                <h2 class="card-title mb-0">₹{{ "%.2f"|format(total_in_inr) }}</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- USA Accounts -->
+    <div class="col-lg-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="bi bi-geo-alt"></i> USA Accounts (USD)</h5>
+            </div>
+            <div class="card-body">
+                {% if usd_accounts %}
+                <div class="list-group list-group-flush mb-3">
+                    {% for account in usd_accounts %}
+                    <a href="{{ url_for('account_detail', account_id=account.id) }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>{{ account.name }}</strong>
+                            <br>
+                            <small class="text-muted">{{ account.account_type.replace('_', ' ').title() }}</small>
+                        </div>
+                        <div class="text-end">
+                            <span class="{% if account.current_balance >= 0 %}text-success{% else %}text-danger{% endif %}">
+                                ${{ "%.2f"|format(account.current_balance) }}
+                            </span>
+                            <br>
+                            <small class="text-muted">₹{{ "%.2f"|format(convert_currency(account.current_balance, 'USD', 'INR')) }}</small>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+                <div class="border-top pt-3">
+                    <div class="d-flex justify-content-between">
+                        <strong>Total USD:</strong>
+                        <span class="{% if usd_total >= 0 %}text-success{% else %}text-danger{% endif %}">
+                            ${{ "%.2f"|format(usd_total) }}
+                        </span>
+                    </div>
+                    <div class="d-flex justify-content-between text-muted">
+                        <small>Equivalent in INR:</small>
+                        <small>₹{{ "%.2f"|format(usd_total_in_inr) }}</small>
+                    </div>
+                </div>
+                {% else %}
+                <p class="text-muted text-center my-4">No USA accounts yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- India Accounts -->
+    <div class="col-lg-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0"><i class="bi bi-geo-alt"></i> India Accounts (INR)</h5>
+            </div>
+            <div class="card-body">
+                {% if inr_accounts %}
+                <div class="list-group list-group-flush mb-3">
+                    {% for account in inr_accounts %}
+                    <a href="{{ url_for('account_detail', account_id=account.id) }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>{{ account.name }}</strong>
+                            <br>
+                            <small class="text-muted">{{ account.account_type.replace('_', ' ').title() }}</small>
+                        </div>
+                        <div class="text-end">
+                            <span class="{% if account.current_balance >= 0 %}text-success{% else %}text-danger{% endif %}">
+                                ₹{{ "%.2f"|format(account.current_balance) }}
+                            </span>
+                            <br>
+                            <small class="text-muted">${{ "%.2f"|format(convert_currency(account.current_balance, 'INR', 'USD')) }}</small>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+                <div class="border-top pt-3">
+                    <div class="d-flex justify-content-between">
+                        <strong>Total INR:</strong>
+                        <span class="{% if inr_total >= 0 %}text-success{% else %}text-danger{% endif %}">
+                            ₹{{ "%.2f"|format(inr_total) }}
+                        </span>
+                    </div>
+                    <div class="d-flex justify-content-between text-muted">
+                        <small>Equivalent in USD:</small>
+                        <small>${{ "%.2f"|format(inr_total_in_usd) }}</small>
+                    </div>
+                </div>
+                {% else %}
+                <p class="text-muted text-center my-4">No India accounts yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Currency Converter -->
+<div class="card mt-4">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="bi bi-calculator"></i> Quick Currency Converter</h5>
+    </div>
+    <div class="card-body">
+        <div class="row align-items-end">
+            <div class="col-md-4 mb-3">
+                <label class="form-label">Amount</label>
+                <input type="number" id="convert-amount" class="form-control" placeholder="Enter amount" value="1000">
+            </div>
+            <div class="col-md-3 mb-3">
+                <label class="form-label">From</label>
+                <select id="convert-from" class="form-select">
+                    <option value="USD">USD ($)</option>
+                    <option value="INR">INR (₹)</option>
+                </select>
+            </div>
+            <div class="col-md-1 mb-3 text-center">
+                <i class="bi bi-arrow-left-right fs-4"></i>
+            </div>
+            <div class="col-md-4 mb-3">
+                <label class="form-label">Result</label>
+                <div class="input-group">
+                    <span class="input-group-text" id="result-symbol">₹</span>
+                    <input type="text" id="convert-result" class="form-control" readonly>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const exchangeRate = {{ exchange_rate }};
+
+function convertCurrency() {
+    const amount = parseFloat(document.getElementById('convert-amount').value) || 0;
+    const fromCurrency = document.getElementById('convert-from').value;
+    const resultSymbol = document.getElementById('result-symbol');
+    const resultField = document.getElementById('convert-result');
+
+    let result;
+    if (fromCurrency === 'USD') {
+        result = amount * exchangeRate;
+        resultSymbol.textContent = '₹';
+    } else {
+        result = amount / exchangeRate;
+        resultSymbol.textContent = '$';
+    }
+
+    resultField.value = result.toFixed(2);
+}
+
+document.getElementById('convert-amount').addEventListener('input', convertCurrency);
+document.getElementById('convert-from').addEventListener('change', convertCurrency);
+convertCurrency();
+</script>
+{% endblock %}

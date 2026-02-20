@@ -1,0 +1,240 @@
+{% extends "base.html" %}
+
+{% block title %}Monthly Report - Finance Tracker{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">Monthly Report</h1>
+
+<!-- Month Selector -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" class="row g-3 align-items-end">
+            <div class="col-auto">
+                <label for="month" class="form-label">Month</label>
+                <select name="month" id="month" class="form-select">
+                    {% for m in range(1, 13) %}
+                    <option value="{{ m }}" {% if m == month %}selected{% endif %}>
+                        {{ ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][m-1] }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-auto">
+                <label for="year" class="form-label">Year</label>
+                <select name="year" id="year" class="form-select">
+                    {% for y in range(2020, 2031) %}
+                    <option value="{{ y }}" {% if y == year %}selected{% endif %}>{{ y }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-arrow-right"></i> View Report
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<h3 class="mb-3">{{ month_name }} {{ year }}</h3>
+
+<!-- Summary Cards -->
+<div class="row mb-4">
+    <div class="col-md-4 mb-3">
+        <div class="card bg-success text-white h-100">
+            <div class="card-body">
+                <h6 class="card-subtitle mb-2 opacity-75">Total Income</h6>
+                <h2 class="card-title mb-0">{{ get_display_symbol() }}{{ "{:,.2f}".format(to_display_currency(total_income, 'USD')) }}</h2>
+                {% if budget and budget.expected_income > 0 %}
+                <small class="opacity-75">
+                    Budget: {{ get_display_symbol() }}{{ "{:,.2f}".format(to_display_currency(budget.expected_income, budget.currency)) }}
+                    ({{ "%.0f"|format(total_income / budget.expected_income * 100) }}%)
+                </small>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3">
+        <div class="card bg-danger text-white h-100">
+            <div class="card-body">
+                <h6 class="card-subtitle mb-2 opacity-75">Total Expenses</h6>
+                <h2 class="card-title mb-0">{{ get_display_symbol() }}{{ "{:,.2f}".format(to_display_currency(total_expenses, 'USD')) }}</h2>
+                {% if budget and budget.total_expected_expenses > 0 %}
+                <small class="opacity-75">
+                    Budget: {{ get_display_symbol() }}{{ "{:,.2f}".format(to_display_currency(budget.total_expected_expenses, budget.currency)) }}
+                    ({{ "%.0f"|format(total_expenses / budget.total_expected_expenses * 100) }}%)
+                </small>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3">
+        <div class="card {% if net >= 0 %}bg-primary{% else %}bg-warning{% endif %} text-white h-100">
+            <div class="card-body">
+                <h6 class="card-subtitle mb-2 opacity-75">Net (Income - Expenses)</h6>
+                <h2 class="card-title mb-0">
+                    {% if net >= 0 %}+{% endif %}{{ get_display_symbol() }}{{ "{:,.2f}".format(to_display_currency(net, 'USD')) }}
+                </h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if budget %}
+<!-- Savings & Investment Progress -->
+<div class="row mb-4">
+    <div class="col-md-6 mb-3">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-piggy-bank text-info"></i> Savings Progress</h5>
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Contributed this month</span>
+                    <span>{{ get_display_symbol() }}{{ "{:,.2f}".format(to_display_currency(savings_contributions, 'USD')) }} / {{ get_display_symbol() }}{{ "{:,.2f}".format(to_display_currency(budget.expected_savings, budget.currency)) }}</span>
+                </div>
+                {% set savings_pct = (savings_contributions / budget.expected_savings * 100) if budget.expected_savings > 0 else 0 %}
+                <div class="progress" style="height: 25px;">
+                    <div class="progress-bar {% if savings_pct >= 100 %}bg-success{% elif savings_pct >= 50 %}bg-info{% else %}bg-warning{% endif %}"
+                         role="progressbar" style="width: {{ [savings_pct, 100]|min }}%">
+                        {{ "%.0f"|format(savings_pct) }}%
+                    </div>
+                </div>
+                {% if savings_pct >= 100 %}
+                <small class="text-success"><i class="bi bi-check-circle"></i> Goal achieved!</small>
+                {% elif budget.expected_savings > savings_contributions %}
+                <small class="text-muted">{{ get_display_symbol() }}{{ "{:,.2f}".format(to_display_currency(budget.expected_savings - savings_contributions, budget.currency)) }} remaining</small>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 mb-3">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-graph-up-arrow text-warning"></i> Investment Progress</h5>
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Contributed this month</span>
+                    <span>{{ get_display_symbol() }}{{ "{:,.2f}".format(to_display_currency(investment_contributions, 'USD')) }} / {{ get_display_symbol() }}{{ "{:,.2f}".format(to_display_currency(budget.expected_investments, budget.currency)) }}</span>
+                </div>
+                {% set invest_pct = (investment_contributions / budget.expected_investments * 100) if budget.expected_investments > 0 else 0 %}
+                <div class="progress" style="height: 25px;">
+                    <div class="progress-bar {% if invest_pct >= 100 %}bg-success{% elif invest_pct >= 50 %}bg-warning{% else %}bg-danger{% endif %}"
+                         role="progressbar" style="width: {{ [invest_pct, 100]|min }}%">
+                        {{ "%.0f"|format(invest_pct) }}%
+                    </div>
+                </div>
+                {% if invest_pct >= 100 %}
+                <small class="text-success"><i class="bi bi-check-circle"></i> Goal achieved!</small>
+                {% elif budget.expected_investments > investment_contributions %}
+                <small class="text-muted">{{ get_display_symbol() }}{{ "{:,.2f}".format(to_display_currency(budget.expected_investments - investment_contributions, budget.currency)) }} remaining</small>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Expenses by Category -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="bi bi-pie-chart"></i> Expenses by Category</h5>
+        {% if budget %}
+        <a href="{{ url_for('budget') }}" class="btn btn-sm btn-outline-primary">
+            <i class="bi bi-pie-chart"></i> View Budget
+        </a>
+        {% endif %}
+    </div>
+    <div class="card-body">
+        {% if expenses %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>Category</th>
+                        <th class="text-end">Actual</th>
+                        {% if budget %}
+                        <th class="text-end">Budgeted</th>
+                        <th class="text-end">Difference</th>
+                        {% endif %}
+                        <th>% of Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for expense in expenses %}
+                    <tr>
+                        <td>{{ expense.category }}</td>
+                        <td class="text-end text-danger">{{ get_display_symbol() }}{{ "{:,.2f}".format(to_display_currency(expense.amount, 'USD')) }}</td>
+                        {% if budget %}
+                        <td class="text-end">
+                            {% if expense.budgeted > 0 %}
+                            {{ get_display_symbol() }}{{ "{:,.2f}".format(to_display_currency(expense.budgeted, budget.currency)) }}
+                            {% else %}
+                            <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end">
+                            {% if expense.difference is not none %}
+                                {% if expense.difference >= 0 %}
+                                <span class="text-success">+{{ get_display_symbol() }}{{ "{:,.2f}".format(to_display_currency(expense.difference, budget.currency)) }}</span>
+                                {% else %}
+                                <span class="text-danger">-{{ get_display_symbol() }}{{ "{:,.2f}".format(to_display_currency(expense.difference|abs, budget.currency)) }}</span>
+                                {% endif %}
+                            {% else %}
+                            <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        {% endif %}
+                        <td>
+                            <div class="progress" style="height: 20px;">
+                                {% set pct = (expense.amount / total_expenses * 100) if total_expenses > 0 else 0 %}
+                                {% if budget and expense.budgeted > 0 %}
+                                    {% set over_budget = expense.amount > expense.budgeted %}
+                                    <div class="progress-bar {% if over_budget %}bg-danger{% else %}bg-success{% endif %}" role="progressbar"
+                                         style="width: {{ pct }}%">
+                                        {{ "%.1f"|format(pct) }}%
+                                    </div>
+                                {% else %}
+                                    <div class="progress-bar bg-primary" role="progressbar"
+                                         style="width: {{ pct }}%">
+                                        {{ "%.1f"|format(pct) }}%
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot class="table-light">
+                    <tr>
+                        <th>Total</th>
+                        <th class="text-end">{{ get_display_symbol() }}{{ "{:,.2f}".format(to_display_currency(total_expenses, 'USD')) }}</th>
+                        {% if budget %}
+                        <th class="text-end">{{ get_display_symbol() }}{{ "{:,.2f}".format(to_display_currency(budget.total_expected_expenses, budget.currency)) }}</th>
+                        <th class="text-end">
+                            {% set total_diff = budget.total_expected_expenses - total_expenses %}
+                            {% if total_diff >= 0 %}
+                            <span class="text-success">+{{ get_display_symbol() }}{{ "{:,.2f}".format(to_display_currency(total_diff, budget.currency)) }}</span>
+                            {% else %}
+                            <span class="text-danger">-{{ get_display_symbol() }}{{ "{:,.2f}".format(to_display_currency(total_diff|abs, budget.currency)) }}</span>
+                            {% endif %}
+                        </th>
+                        {% endif %}
+                        <th></th>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-4">
+            <i class="bi bi-receipt fs-1 text-muted"></i>
+            <h5 class="mt-3">No expenses for {{ month_name }} {{ year }}</h5>
+            <p class="text-muted">Add transactions to see your expense breakdown.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% if not budget %}
+<div class="alert alert-info mt-4">
+    <i class="bi bi-lightbulb"></i> <strong>Tip:</strong> Set up a <a href="{{ url_for('edit_budget') }}" class="alert-link">budget</a> to compare your spending against your goals.
+</div>
+{% endif %}
+{% endblock %}

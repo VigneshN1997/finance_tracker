@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Account Goal - Finance Tracker{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-4">
+        <div class="card shadow">
+            <div class="card-header">
+                <h4 class="mb-0">
+                    <i class="bi bi-pencil"></i> Edit Account Goal
+                </h4>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                    <div class="mb-3">
+                        <label class="form-label">Account</label>
+                        <input type="text" class="form-control" value="{{ goal.account.name }}" disabled>
+                        <small class="form-text text-muted">
+                            {{ goal.account.account_type.replace('_', ' ')|title }} - {{ goal.account.currency }}
+                        </small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="monthly_goal" class="form-label">Monthly Contribution Goal ({{ goal.account.currency_symbol }})</label>
+                        <div class="input-group">
+                            <span class="input-group-text">{{ goal.account.currency_symbol }}</span>
+                            <input type="number" name="monthly_goal" id="monthly_goal" class="form-control"
+                                   step="0.01" min="0.01" value="{{ goal.monthly_goal }}" required>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-lg"></i> Save Changes
+                        </button>
+                        <a href="{{ url_for('budget') }}" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

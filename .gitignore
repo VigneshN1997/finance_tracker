@@ -1,0 +1,50 @@
+# Database files (contains user data)
+*.db
+*.sqlite
+*.sqlite3
+
+# Flask instance folder (contains database)
+instance/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Virtual environment
+venv/
+env/
+.venv/
+.env/
+
+# Environment variables (may contain secrets)
+.env
+.env.local
+.env.*.local
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Claude Code session data
+.claude/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+
+
+reset_password.py
+recreate_fixed_deposits.py

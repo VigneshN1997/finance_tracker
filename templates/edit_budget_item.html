@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Budget Item - Finance Tracker{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-4">
+        <div class="card shadow">
+            <div class="card-header">
+                <h4 class="mb-0">
+                    <i class="bi bi-pencil"></i> Edit Budget Item
+                </h4>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                    <div class="mb-3">
+                        <label class="form-label">Category</label>
+                        <input type="text" class="form-control" value="{{ item.category.replace('_', ' ')|title }}" disabled>
+                        <small class="form-text text-muted">Category cannot be changed. Delete and create a new item to change category.</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="amount" class="form-label">Budget Amount ({{ get_currency_symbol(item.budget.currency) }})</label>
+                        <div class="input-group">
+                            <span class="input-group-text">{{ get_currency_symbol(item.budget.currency) }}</span>
+                            <input type="number" name="amount" id="amount" class="form-control"
+                                   step="0.01" min="0.01" value="{{ item.amount }}" required>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-lg"></i> Save Changes
+                        </button>
+                        <a href="{{ url_for('budget') }}" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,454 @@
+{% extends "base.html" %}
+
+{% block title %}Net Worth - Finance Tracker{% endblock %}
+
+{% block content %}
+<h1 class="mb-4"><i class="bi bi-gem"></i> Net Worth</h1>
+
+<!-- Net Worth Summary -->
+<div class="row mb-4">
+    <div class="col-lg-4 mb-3">
+        <div class="card h-100 {% if net_worth_usd >= 0 %}bg-success{% else %}bg-danger{% endif %} text-white">
+            <div class="card-body text-center">
+                <h6 class="card-subtitle mb-2 opacity-75">Net Worth ({{ get_display_currency() }})</h6>
+                <h1 class="display-4 mb-1">{{ get_display_symbol() }}{{
+                    "{:,.2f}".format(to_display_currency(net_worth_usd, 'USD')) }}</h1>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4 mb-3">
+        <div class="card h-100 bg-primary text-white">
+            <div class="card-body text-center">
+                <h6 class="card-subtitle mb-2 opacity-75">Total Assets</h6>
+                <h2 class="mb-0">{{ get_display_symbol() }}{{ "{:,.2f}".format(to_display_currency(total_assets, 'USD'))
+                    }}</h2>
+                <small class="opacity-75">Checking + Savings + Investments</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4 mb-3">
+        <div class="card h-100 bg-danger text-white">
+            <div class="card-body text-center">
+                <h6 class="card-subtitle mb-2 opacity-75">Total Liabilities</h6>
+                <h2 class="mb-0">{{ get_display_symbol() }}{{ "{:,.2f}".format(to_display_currency(total_liabilities,
+                    'USD')) }}</h2>
+                <small class="opacity-75">Credit Cards + Loans</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Pie Charts Section -->
+<div class="row mb-4">
+    <div class="col-md-6 mb-3">
+        <div class="card h-100">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="bi bi-pie-chart"></i> Assets Breakdown</h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container" style="position: relative; height: 300px;">
+                    <canvas id="assetsChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 mb-3">
+        <div class="card h-100">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0"><i class="bi bi-pie-chart"></i> Liabilities Breakdown</h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container" style="position: relative; height: 300px;">
+                    <canvas id="liabilitiesChart"></canvas>
+                </div>
+                {% if not credit_cards and not loans %}
+                <p class="text-muted text-center mb-0">No liabilities to display</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Assets Section -->
+<h4 class="mb-3 text-success"><i class="bi bi-plus-circle"></i> Assets</h4>
+<div class="row mb-4">
+    <!-- Checking Accounts -->
+    <div class="col-md-4 mb-3">
+        <div class="card h-100">
+            <div class="card-header bg-info text-white">
+                <h6 class="mb-0"><i class="bi bi-cash-stack"></i> Checking</h6>
+            </div>
+            <div class="card-body">
+                {% if checking_accounts %}
+                <ul class="list-group list-group-flush">
+                    {% for account in checking_accounts %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                        <span>
+                            {{ account.name }}
+                            <br><small class="text-muted">{{ account.country }}</small>
+                        </span>
+                        <span class="text-end">
+                            {{ display_value(account.total_value, account.currency) }}
+                            {% if account.currency != get_display_currency() %}
+                            <br><small class="text-muted">{{ account.currency_symbol }}{{
+                                "{:,.2f}".format(account.total_value) }}</small>
+                            {% endif %}
+                        </span>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="text-muted mb-0">No checking accounts</p>
+                {% endif %}
+            </div>
+            <div class="card-footer bg-light">
+                <strong>Total: {{ get_display_symbol() }}{{ "{:,.2f}".format(to_display_currency(checking_total, 'USD'))
+                    }}</strong>
+            </div>
+        </div>
+    </div>
+
+    <!-- Savings Accounts -->
+    <div class="col-md-4 mb-3">
+        <div class="card h-100">
+            <div class="card-header bg-success text-white">
+                <h6 class="mb-0"><i class="bi bi-piggy-bank"></i> Savings</h6>
+            </div>
+            <div class="card-body">
+                {% if savings_accounts %}
+                <ul class="list-group list-group-flush">
+                    {% for account in savings_accounts %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                        <span>
+                            {{ account.name }}
+                            <br><small class="text-muted">{{ account.country }}</small>
+                        </span>
+                        <span class="text-end">
+                            {{ display_value(account.total_value, account.currency) }}
+                            {% if account.currency != get_display_currency() %}
+                            <br><small class="text-muted">{{ account.currency_symbol }}{{
+                                "{:,.2f}".format(account.total_value) }}</small>
+                            {% endif %}
+                        </span>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="text-muted mb-0">No savings accounts</p>
+                {% endif %}
+            </div>
+            <div class="card-footer bg-light">
+                <strong>Total: {{ get_display_symbol() }}{{ "{:,.2f}".format(to_display_currency(savings_total, 'USD'))
+                    }}</strong>
+            </div>
+        </div>
+    </div>
+
+    <!-- Investment Accounts -->
+    <div class="col-md-4 mb-3">
+        <div class="card h-100">
+            <div class="card-header" style="background-color: #6f42c1; color: white;">
+                <h6 class="mb-0"><i class="bi bi-graph-up-arrow"></i> Investments</h6>
+            </div>
+            <div class="card-body">
+                {% if investments %}
+                <ul class="list-group list-group-flush">
+                    {% for account in investments %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                        <span>
+                            {{ account.name }}
+                            <br><small class="text-muted">{{ account.country }}</small>
+                        </span>
+                        <span class="text-end">
+                            {{ display_value(account.total_value, account.currency) }}
+                            <a href="{{ url_for('update_balance', account_id=account.id) }}"
+                                class="btn btn-sm btn-outline-primary ms-1" title="Update balance">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            {% if account.currency != get_display_currency() %}
+                            <br><small class="text-muted">{{ account.currency_symbol }}{{
+                                "{:,.2f}".format(account.total_value) }}</small>
+                            {% endif %}
+                        </span>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="text-muted mb-0">No investment accounts</p>
+                {% endif %}
+            </div>
+            <div class="card-footer bg-light">
+                <strong>Total: {{ get_display_symbol() }}{{ "{:,.2f}".format(to_display_currency(investment_total,
+                    'USD')) }}</strong>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Liabilities Section -->
+<h4 class="mb-3 text-danger"><i class="bi bi-dash-circle"></i> Liabilities</h4>
+<div class="row mb-4">
+    <!-- Credit Cards -->
+    <div class="col-md-6 mb-3">
+        <div class="card h-100">
+            <div class="card-header bg-warning text-dark">
+                <h6 class="mb-0"><i class="bi bi-credit-card"></i> Credit Cards</h6>
+            </div>
+            <div class="card-body">
+                {% if credit_cards %}
+                <ul class="list-group list-group-flush">
+                    {% for account in credit_cards %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                        <span>
+                            {{ account.name }}
+                            <br><small class="text-muted">{{ account.country }}</small>
+                        </span>
+                        <span
+                            class="text-end {% if account.current_balance < 0 %}text-danger{% else %}text-success{% endif %}">
+                            {{ display_value(account.current_balance, account.currency) }}
+                            {% if account.current_balance < 0 %}<small>(owed)</small>{% endif %}
+                                {% if account.currency != get_display_currency() %}
+                                <br><small class="text-muted">{{ account.currency_symbol }}{{
+                                    "{:,.2f}".format(account.current_balance|abs) }}</small>
+                                {% endif %}
+                        </span>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="text-muted mb-0">No credit cards</p>
+                {% endif %}
+            </div>
+            <div class="card-footer bg-light">
+                <strong>Total Owed: {{ get_display_symbol() }}{{
+                    "{:,.2f}".format(to_display_currency(credit_card_total|abs, 'USD')) }}</strong>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loans -->
+    <div class="col-md-6 mb-3">
+        <div class="card h-100">
+            <div class="card-header bg-danger text-white">
+                <h6 class="mb-0"><i class="bi bi-car-front"></i> Loans</h6>
+            </div>
+            <div class="card-body">
+                {% if loans %}
+                <ul class="list-group list-group-flush">
+                    {% for account in loans %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                        <span>
+                            {{ account.name }}
+                            <br><small class="text-muted">{{ account.country }}</small>
+                        </span>
+                        <span class="text-end text-danger">
+                            {{ display_value(account.current_balance, account.currency) }}
+                            {% if account.currency != get_display_currency() %}
+                            <br><small class="text-muted">{{ account.currency_symbol }}{{
+                                "{:,.2f}".format(account.current_balance|abs) }}</small>
+                            {% endif %}
+                        </span>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="text-muted mb-0">No loans</p>
+                {% endif %}
+            </div>
+            <div class="card-footer bg-light">
+                <strong>Total Owed: {{ get_display_symbol() }}{{ "{:,.2f}".format(to_display_currency(loan_total|abs,
+                    'USD')) }}</strong>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Summary Table -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="bi bi-calculator"></i> Net Worth Breakdown ({{ get_display_currency() }})</h5>
+    </div>
+    <div class="card-body">
+        <table class="table table-borderless mb-0">
+            <tbody>
+                <tr>
+                    <td><i class="bi bi-cash-stack text-info"></i> Checking</td>
+                    <td class="text-end text-success">+{{ get_display_symbol() }}{{
+                        "{:,.2f}".format(to_display_currency(checking_total, 'USD')) }}</td>
+                </tr>
+                <tr>
+                    <td><i class="bi bi-piggy-bank text-success"></i> Savings</td>
+                    <td class="text-end text-success">+{{ get_display_symbol() }}{{
+                        "{:,.2f}".format(to_display_currency(savings_total, 'USD')) }}</td>
+                </tr>
+                <tr>
+                    <td><i class="bi bi-graph-up-arrow" style="color: #6f42c1;"></i> Investments</td>
+                    <td class="text-end text-success">+{{ get_display_symbol() }}{{
+                        "{:,.2f}".format(to_display_currency(investment_total, 'USD')) }}</td>
+                </tr>
+                <tr>
+                    <td><i class="bi bi-credit-card text-warning"></i> Credit Cards</td>
+                    <td class="text-end text-danger">-{{ get_display_symbol() }}{{
+                        "{:,.2f}".format(to_display_currency(credit_card_total|abs, 'USD')) }}</td>
+                </tr>
+                <tr>
+                    <td><i class="bi bi-car-front text-danger"></i> Loans</td>
+                    <td class="text-end text-danger">-{{ get_display_symbol() }}{{
+                        "{:,.2f}".format(to_display_currency(loan_total|abs, 'USD')) }}</td>
+                </tr>
+                <tr class="border-top">
+                    <td><strong>Net Worth</strong></td>
+                    <td class="text-end"><strong
+                            class="{% if net_worth_usd >= 0 %}text-success{% else %}text-danger{% endif %}">{{
+                            get_display_symbol() }}{{ "{:,.2f}".format(to_display_currency(net_worth_usd, 'USD'))
+                            }}</strong></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="text-muted mt-3 text-center">
+    <small><i class="bi bi-info-circle"></i> Exchange rate: 1 USD = {{ "%.2f"|format(exchange_rate) }} INR</small>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const displayCurrency = '{{ get_display_currency() }}';
+        const displaySymbol = '{{ get_display_symbol() }}';
+
+        // Color palette for unique account colors
+        const assetColors = [
+            '#2ecc71', '#3498db', '#9b59b6', '#1abc9c', '#34495e',
+            '#27ae60', '#2980b9', '#8e44ad', '#16a085', '#2c3e50',
+            '#00b894', '#0984e3', '#6c5ce7', '#00cec9', '#636e72',
+            '#55efc4', '#74b9ff', '#a29bfe', '#81ecec', '#b2bec3'
+        ];
+
+        const liabilityColors = [
+            '#e74c3c', '#e67e22', '#f39c12', '#d35400', '#c0392b',
+            '#ff7675', '#fdcb6e', '#ffeaa7', '#fab1a0', '#e17055',
+            '#ff6b6b', '#feca57', '#ff9ff3', '#f368e0', '#ee5a24'
+        ];
+
+        // Assets data - individual accounts
+        const assetsData = {
+            labels: [
+                {% for account in checking_accounts %}'{{ account.name }}', {% endfor %}
+            {% for account in savings_accounts %}'{{ account.name }}', {% endfor %}
+    {% for account in investments %} '{{ account.name }}', {% endfor %}
+        ],
+    values: [
+        {% for account in checking_accounts %}{{to_display_currency(account.total_value, account.currency)}}, {% endfor %}
+    {% for account in savings_accounts %} {{to_display_currency(account.total_value, account.currency)}}, {% endfor %}
+    {% for account in investments %} {{to_display_currency(account.total_value, account.currency)}}, {% endfor %}
+        ]
+    };
+    // Assign unique colors to each asset account
+    assetsData.colors = assetsData.labels.map((_, i) => assetColors[i % assetColors.length]);
+
+    // Liabilities data - individual accounts
+    const liabilitiesData = {
+        labels: [
+            {% for account in credit_cards %}'{{ account.name }}', {% endfor %}
+    {% for account in loans %} '{{ account.name }}', {% endfor %}
+        ],
+    values: [
+        {% for account in credit_cards %}{{(to_display_currency(account.current_balance, account.currency) | abs)}}, {% endfor %}
+    {% for account in loans %} {{(to_display_currency(account.current_balance, account.currency) | abs)}}, {% endfor %}
+        ]
+    };
+    // Assign unique colors to each liability account
+    liabilitiesData.colors = liabilitiesData.labels.map((_, i) => liabilityColors[i % liabilityColors.length]);
+
+    // Format number with commas
+    function formatNumber(num) {
+        return num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    // Assets Pie Chart
+    if (assetsData.values.length > 0 && assetsData.values.some(v => v > 0)) {
+        const assetsCtx = document.getElementById('assetsChart').getContext('2d');
+        new Chart(assetsCtx, {
+            type: 'pie',
+            data: {
+                labels: assetsData.labels,
+                datasets: [{
+                    data: assetsData.values,
+                    backgroundColor: assetsData.colors,
+                    borderWidth: 2,
+                    borderColor: '#fff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 15,
+                            usePointStyle: true
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                const value = context.raw;
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = ((value / total) * 100).toFixed(1);
+                                return `${context.label}: ${displaySymbol}${formatNumber(value)} (${percentage}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    } else {
+        document.getElementById('assetsChart').parentElement.innerHTML = '<p class="text-muted text-center mb-0">No assets to display</p>';
+    }
+
+    // Liabilities Pie Chart
+    if (liabilitiesData.values.length > 0 && liabilitiesData.values.some(v => v > 0)) {
+        const liabilitiesCtx = document.getElementById('liabilitiesChart').getContext('2d');
+        new Chart(liabilitiesCtx, {
+            type: 'pie',
+            data: {
+                labels: liabilitiesData.labels,
+                datasets: [{
+                    data: liabilitiesData.values,
+                    backgroundColor: liabilitiesData.colors,
+                    borderWidth: 2,
+                    borderColor: '#fff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 15,
+                            usePointStyle: true
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                const value = context.raw;
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = ((value / total) * 100).toFixed(1);
+                                return `${context.label}: ${displaySymbol}${formatNumber(value)} (${percentage}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

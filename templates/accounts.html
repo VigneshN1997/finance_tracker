@@ -1,0 +1,210 @@
+{% extends "base.html" %}
+
+{% block title %}Accounts - Finance Tracker{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Your Accounts</h1>
+    <a href="{{ url_for('add_account') }}" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i> Add Account
+    </a>
+</div>
+
+{% if accounts %}
+<p class="text-muted mb-3"><i class="bi bi-grip-vertical"></i> Drag cards to reorder</p>
+<div class="row" id="accounts-container">
+    {% for account in accounts %}
+    <div class="col-md-6 col-lg-4 mb-4 account-card" data-account-id="{{ account.id }}" draggable="true">
+        <div class="card h-100">
+            <div class="card-header" style="cursor: grab;">
+                <div class="d-flex justify-content-between align-items-center">
+                    <span>
+                        <i class="bi bi-grip-vertical text-muted me-1"></i>
+                        {% if account.account_type == 'credit_card' %}
+                        <i class="bi bi-credit-card text-primary"></i>
+                        {% elif account.account_type == 'savings' %}
+                        <i class="bi bi-piggy-bank text-success"></i>
+                        {% elif account.account_type == 'loan' %}
+                        <i class="bi bi-car-front text-danger"></i>
+                        {% elif account.account_type == 'investment' %}
+                        <i class="bi bi-graph-up-arrow text-purple"></i>
+                        {% else %}
+                        <i class="bi bi-cash-stack text-info"></i>
+                        {% endif %}
+                        {{ account.account_type.replace('_', ' ').title() }}
+                    </span>
+                    <span
+                        class="badge {% if account.currency == 'INR' %}bg-warning text-dark{% else %}bg-info{% endif %}">
+                        {% if account.currency == 'INR' %}
+                        <i class="bi bi-geo-alt"></i> India
+                        {% else %}
+                        <i class="bi bi-geo-alt"></i> USA
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <h5 class="card-title">{{ account.name }}</h5>
+                    <div>
+                        <a href="{{ url_for('edit_account', account_id=account.id) }}"
+                            class="btn btn-sm btn-outline-secondary me-1" title="Edit account">
+                            <i class="bi bi-gear"></i>
+                        </a>
+                        {% if account.account_type == 'investment' %}
+                        <a href="{{ url_for('update_balance', account_id=account.id) }}"
+                            class="btn btn-sm btn-outline-primary me-1" title="Update balance">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                        {% endif %}
+                        <form action="{{ url_for('delete_account', account_id=account.id) }}" method="POST"
+                            class="d-inline"
+                            onsubmit="return confirm('Are you sure you want to delete this account? All transactions will be deleted.');">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete account">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                <p class="card-text">
+                    <small class="text-muted">Initial: {{ account.currency_symbol }}{{
+                        "%.2f"|format(account.initial_balance) }}</small>
+                </p>
+                <h3 class="{% if account.total_value >= 0 %}text-success{% else %}text-danger{% endif %}">
+                    {{ display_value(account.total_value, account.currency) }}
+                </h3>
+                <p class="card-text mb-2">
+                    <small class="text-muted">
+                        {% if account.currency == 'INR' and account.total_fixed_deposits > 0 %}
+                        Total Value (incl. FDs)
+                        {% else %}
+                        Current Balance
+                        {% endif %}
+                    </small>
+                </p>
+                <!-- Show original value if different from display currency -->
+                {% if account.currency != get_display_currency() %}
+                <p class="card-text">
+                    <small class="text-muted">
+                        <i class="bi bi-arrow-left-right"></i> {{ account.currency_symbol }}{{
+                        "{:,.2f}".format(account.total_value|abs) }} {{ account.currency }}
+                    </small>
+                </p>
+                {% endif %}
+                <!-- Show FD breakdown for INR accounts -->
+                {% if account.currency == 'INR' and account.total_fixed_deposits > 0 %}
+                <p class="card-text">
+                    <small class="text-success">
+                        <i class="bi bi-safe"></i> ₹{{ "{:,.0f}".format(account.total_fixed_deposits) }} in FDs
+                    </small>
+                </p>
+                {% endif %}
+            </div>
+            <div class="card-footer">
+                <a href="{{ url_for('account_detail', account_id=account.id) }}" class="btn btn-outline-primary w-100">
+                    View Transactions <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="text-center py-5">
+    <i class="bi bi-bank fs-1 text-muted"></i>
+    <h4 class="mt-3">No accounts yet</h4>
+    <p class="text-muted">Create your first account to start tracking your finances.</p>
+    <a href="{{ url_for('add_account') }}" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i> Create Account
+    </a>
+</div>
+{% endif %}
+
+<style>
+    .account-card.dragging {
+        opacity: 0.5;
+    }
+
+    .account-card.drag-over {
+        border: 2px dashed #0d6efd;
+        border-radius: 8px;
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const container = document.getElementById('accounts-container');
+        if (!container) return;
+
+        let draggedItem = null;
+
+        container.querySelectorAll('.account-card').forEach(card => {
+            card.addEventListener('dragstart', function (e) {
+                draggedItem = this;
+                this.classList.add('dragging');
+                e.dataTransfer.effectAllowed = 'move';
+            });
+
+            card.addEventListener('dragend', function () {
+                this.classList.remove('dragging');
+                container.querySelectorAll('.account-card').forEach(c => c.classList.remove('drag-over'));
+                saveOrder();
+            });
+
+            card.addEventListener('dragover', function (e) {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+            });
+
+            card.addEventListener('dragenter', function (e) {
+                e.preventDefault();
+                if (this !== draggedItem) {
+                    this.classList.add('drag-over');
+                }
+            });
+
+            card.addEventListener('dragleave', function () {
+                this.classList.remove('drag-over');
+            });
+
+            card.addEventListener('drop', function (e) {
+                e.preventDefault();
+                if (this !== draggedItem) {
+                    const allCards = [...container.querySelectorAll('.account-card')];
+                    const draggedIndex = allCards.indexOf(draggedItem);
+                    const targetIndex = allCards.indexOf(this);
+
+                    if (draggedIndex < targetIndex) {
+                        this.parentNode.insertBefore(draggedItem, this.nextSibling);
+                    } else {
+                        this.parentNode.insertBefore(draggedItem, this);
+                    }
+                }
+                this.classList.remove('drag-over');
+            });
+        });
+
+        function saveOrder() {
+            const cards = container.querySelectorAll('.account-card');
+            const order = [...cards].map(card => parseInt(card.dataset.accountId));
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+            fetch('{{ url_for("reorder_accounts") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify({ order: order })
+            }).then(response => {
+                if (!response.ok) {
+                    console.error('Failed to save order');
+                }
+            }).catch(err => {
+                console.error('Error saving order:', err);
+            });
+        }
+    });
+</script>
+{% endblock %}

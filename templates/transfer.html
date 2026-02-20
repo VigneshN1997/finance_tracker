@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}Transfer - Finance Tracker{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card shadow">
+            <div class="card-header">
+                <h4 class="mb-0"><i class="bi bi-arrow-left-right"></i> Transfer Between Accounts</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST" novalidate>
+                    {{ form.hidden_tag() }}
+
+                    <div class="mb-3">
+                        <label for="from_account_id" class="form-label">From Account</label>
+                        {{ form.from_account_id(class="form-select" + (" is-invalid" if form.from_account_id.errors else "")) }}
+                        {% for error in form.from_account_id.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="text-center my-3">
+                        <i class="bi bi-arrow-down fs-3 text-primary"></i>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="to_account_id" class="form-label">To Account</label>
+                        {{ form.to_account_id(class="form-select" + (" is-invalid" if form.to_account_id.errors else "")) }}
+                        {% for error in form.to_account_id.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                        {% endfor %}
+                        <div class="form-text">
+                            Tip: To pay off a credit card, transfer from your checking/savings to the credit card.
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="amount" class="form-label">Amount</label>
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            {{ form.amount(class="form-control" + (" is-invalid" if form.amount.errors else ""), placeholder="0.00") }}
+                            {% for error in form.amount.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description (optional)</label>
+                        {{ form.description(class="form-control" + (" is-invalid" if form.description.errors else ""), placeholder="e.g., Credit card payment") }}
+                        {% for error in form.description.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="transfer_date" class="form-label">Date</label>
+                        {{ form.transfer_date(class="form-control" + (" is-invalid" if form.transfer_date.errors else ""), type="date") }}
+                        {% for error in form.transfer_date.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-arrow-left-right"></i> Transfer
+                        </button>
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="bi bi-lightning"></i> Common Transfers</h6>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0">
+                    <li class="mb-2">
+                        <i class="bi bi-credit-card text-danger me-2"></i>
+                        <strong>Pay credit card:</strong> Transfer from checking/savings to credit card
+                    </li>
+                    <li class="mb-2">
+                        <i class="bi bi-piggy-bank text-success me-2"></i>
+                        <strong>Save money:</strong> Transfer from checking to savings
+                    </li>
+                    <li>
+                        <i class="bi bi-cash-stack text-info me-2"></i>
+                        <strong>Use savings:</strong> Transfer from savings to checking
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

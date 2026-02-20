@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block title %}Add Fixed Deposit - Finance Tracker{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card shadow">
+            <div class="card-header">
+                <h4 class="mb-0"><i class="bi bi-safe"></i> Add Fixed Deposit</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST" novalidate>
+                    {{ form.hidden_tag() }}
+
+                    <div class="mb-3">
+                        <label for="account_id" class="form-label">Account</label>
+                        {{ form.account_id(class="form-select" + (" is-invalid" if form.account_id.errors else "")) }}
+                        {% for error in form.account_id.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                        {% endfor %}
+                        <div class="form-text">Select the INR account to link this FD to.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="principal" class="form-label">Principal Amount</label>
+                        <div class="input-group">
+                            <span class="input-group-text">₹</span>
+                            {{ form.principal(class="form-control" + (" is-invalid" if form.principal.errors else ""), placeholder="100000") }}
+                            {% for error in form.principal.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        <div class="form-text">Minimum FD amount is Rs. 1,000</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="interest_rate" class="form-label">Interest Rate (% per annum)</label>
+                        <div class="input-group">
+                            {{ form.interest_rate(class="form-control" + (" is-invalid" if form.interest_rate.errors else ""), placeholder="7.5") }}
+                            <span class="input-group-text">%</span>
+                            {% for error in form.interest_rate.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        <div class="form-text">Annual interest rate (e.g., 7.5 for 7.5%)</div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="start_date" class="form-label">Start Date</label>
+                            {{ form.start_date(class="form-control" + (" is-invalid" if form.start_date.errors else "")) }}
+                            {% for error in form.start_date.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="maturity_date" class="form-label">Maturity Date</label>
+                            {{ form.maturity_date(class="form-control" + (" is-invalid" if form.maturity_date.errors else "")) }}
+                            {% for error in form.maturity_date.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="bank_name" class="form-label">Bank Name <small class="text-muted">(optional)</small></label>
+                        {{ form.bank_name(class="form-control" + (" is-invalid" if form.bank_name.errors else ""), placeholder="e.g., SBI, HDFC Bank") }}
+                        {% for error in form.bank_name.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="fd_number" class="form-label">FD Number/Reference <small class="text-muted">(optional)</small></label>
+                        {{ form.fd_number(class="form-control" + (" is-invalid" if form.fd_number.errors else ""), placeholder="e.g., FD123456789") }}
+                        {% for error in form.fd_number.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="mb-3 form-check">
+                        {{ form.debit_from_account(class="form-check-input", checked=True) }}
+                        <label class="form-check-label" for="debit_from_account">
+                            Debit principal from account
+                        </label>
+                        <div class="form-text">Creates a transaction to debit the principal amount from the selected account.</div>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-plus-circle"></i> Add Fixed Deposit
+                        </button>
+                        <a href="{{ url_for('fixed_deposits') }}" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

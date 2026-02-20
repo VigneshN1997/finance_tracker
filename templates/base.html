@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>{% block title %}Finance Tracker{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='style.css') }}" rel="stylesheet">
+    <style>
+        /* Sidebar styles */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: -280px;
+            width: 280px;
+            height: 100vh;
+            background-color: #0d6efd;
+            transition: left 0.3s ease;
+            z-index: 1050;
+            overflow-y: auto;
+        }
+        .sidebar.open {
+            left: 0;
+        }
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1040;
+            display: none;
+        }
+        .sidebar-overlay.show {
+            display: block;
+        }
+        .sidebar-header {
+            padding: 1rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .sidebar-brand {
+            color: white;
+            font-size: 1.25rem;
+            font-weight: 600;
+            text-decoration: none;
+        }
+        .sidebar-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0;
+        }
+        .sidebar-nav {
+            padding: 1rem 0;
+        }
+        .sidebar-nav .nav-link {
+            color: rgba(255,255,255,0.85);
+            padding: 0.75rem 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            transition: background 0.2s;
+        }
+        .sidebar-nav .nav-link:hover {
+            background: rgba(255,255,255,0.1);
+            color: white;
+        }
+        .sidebar-nav .nav-link i {
+            font-size: 1.1rem;
+            width: 24px;
+            text-align: center;
+        }
+        .sidebar-footer {
+            padding: 1rem;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            margin-top: auto;
+        }
+        .sidebar-user {
+            color: rgba(255,255,255,0.7);
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        /* Top bar */
+        .topbar {
+            background-color: #0d6efd;
+            padding: 0.75rem 1rem;
+            position: sticky;
+            top: 0;
+            z-index: 1030;
+        }
+        .topbar-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .hamburger-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0.25rem;
+            display: flex;
+            align-items: center;
+        }
+        .topbar-brand {
+            color: white;
+            font-size: 1.25rem;
+            font-weight: 600;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .topbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .currency-toggle {
+            color: white;
+            text-decoration: none;
+        }
+        .currency-toggle .badge {
+            font-size: 0.8rem;
+        }
+        /* Main content adjustment */
+        main {
+            min-height: calc(100vh - 120px);
+        }
+    </style>
+</head>
+<body>
+    {% if current_user.is_authenticated %}
+    <!-- Sidebar Overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <a href="{{ url_for('index') }}" class="sidebar-brand">
+                <i class="bi bi-wallet2"></i> Finance Tracker
+            </a>
+            <button class="sidebar-close" id="sidebarClose">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+        <nav class="sidebar-nav">
+            <a class="nav-link" href="{{ url_for('dashboard') }}">
+                <i class="bi bi-speedometer2"></i> Dashboard
+            </a>
+            <a class="nav-link" href="{{ url_for('accounts') }}">
+                <i class="bi bi-bank"></i> Accounts
+            </a>
+            <a class="nav-link" href="{{ url_for('fixed_deposits') }}">
+                <i class="bi bi-safe"></i> Fixed Deposits
+            </a>
+            <a class="nav-link" href="{{ url_for('credit_cards') }}">
+                <i class="bi bi-credit-card"></i> Credit Cards
+            </a>
+            <a class="nav-link" href="{{ url_for('add_transaction') }}">
+                <i class="bi bi-plus-circle"></i> Add Transaction
+            </a>
+            <a class="nav-link" href="{{ url_for('transfer') }}">
+                <i class="bi bi-arrow-left-right"></i> Transfer
+            </a>
+            <a class="nav-link" href="{{ url_for('monthly_report') }}">
+                <i class="bi bi-bar-chart"></i> Monthly Report
+            </a>
+            <a class="nav-link" href="{{ url_for('budget') }}">
+                <i class="bi bi-pie-chart"></i> Budget
+            </a>
+            <a class="nav-link" href="{{ url_for('net_worth') }}">
+                <i class="bi bi-gem"></i> Net Worth
+            </a>
+            <a class="nav-link" href="{{ url_for('currency_summary') }}">
+                <i class="bi bi-currency-exchange"></i> Currency
+            </a>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="sidebar-user">
+                <i class="bi bi-person-circle"></i> {{ current_user.email }}
+            </div>
+            <a class="nav-link" href="{{ url_for('logout') }}">
+                <i class="bi bi-box-arrow-right"></i> Logout
+            </a>
+        </div>
+    </div>
+
+    <!-- Top Bar -->
+    <div class="topbar">
+        <div class="container-fluid topbar-content">
+            <div class="d-flex align-items-center gap-3">
+                <button class="hamburger-btn" id="hamburgerBtn">
+                    <i class="bi bi-list"></i>
+                </button>
+                <a href="{{ url_for('index') }}" class="topbar-brand">
+                    <i class="bi bi-wallet2"></i> Finance Tracker
+                </a>
+            </div>
+            <div class="topbar-actions">
+                <a class="currency-toggle" href="{{ url_for('toggle_currency') }}" title="Click to switch display currency">
+                    <span class="badge bg-light text-dark">
+                        {% if get_display_currency() == 'USD' %}
+                            <i class="bi bi-currency-dollar"></i> USD
+                        {% else %}
+                            <i class="bi bi-currency-rupee"></i> INR
+                        {% endif %}
+                    </span>
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <main class="container my-4">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="bg-light py-3 mt-auto">
+        <div class="container text-center text-muted">
+            <small>Finance Tracker &copy; {{ now().year if now is defined else 2024 }}</small>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            const hamburgerBtn = document.getElementById('hamburgerBtn');
+            const closeBtn = document.getElementById('sidebarClose');
+
+            function openSidebar() {
+                sidebar.classList.add('open');
+                overlay.classList.add('show');
+                document.body.style.overflow = 'hidden';
+            }
+
+            function closeSidebar() {
+                sidebar.classList.remove('open');
+                overlay.classList.remove('show');
+                document.body.style.overflow = '';
+            }
+
+            if (hamburgerBtn) {
+                hamburgerBtn.addEventListener('click', openSidebar);
+            }
+            if (closeBtn) {
+                closeBtn.addEventListener('click', closeSidebar);
+            }
+            if (overlay) {
+                overlay.addEventListener('click', closeSidebar);
+            }
+
+            // Close sidebar when clicking a nav link (for mobile)
+            document.querySelectorAll('.sidebar-nav .nav-link').forEach(link => {
+                link.addEventListener('click', closeSidebar);
+            });
+        });
+    </script>
+</body>
+</html>

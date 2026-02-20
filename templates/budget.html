@@ -1,0 +1,483 @@
+{% extends "base.html" %}
+
+{% block title %}Budget - Finance Tracker{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-pie-chart"></i> Budget</h2>
+    <a href="{{ url_for('edit_budget') }}" class="btn btn-primary">
+        <i class="bi bi-gear"></i> {% if budget %}Edit{% else %}Create{% endif %} Budget
+    </a>
+</div>
+
+{% if not budget %}
+<div class="alert alert-info">
+    <i class="bi bi-info-circle"></i> You haven't set up a budget yet.
+    <a href="{{ url_for('edit_budget') }}" class="alert-link">Create your first budget</a> to start tracking your spending goals.
+</div>
+{% else %}
+
+<!-- Budget Overview Cards -->
+<div class="row mb-4">
+    <div class="col-md-3 col-6 mb-3">
+        <div class="card bg-success text-white h-100">
+            <div class="card-body">
+                <h6 class="card-subtitle mb-1">Expected Income</h6>
+                <h4 class="card-title mb-0">{{ get_display_symbol() }}{{ "{:,.2f}".format(to_display_currency(budget.expected_income, budget.currency)) }}</h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6 mb-3">
+        <div class="card bg-danger text-white h-100">
+            <div class="card-body">
+                <h6 class="card-subtitle mb-1">Expected Expenses</h6>
+                <h4 class="card-title mb-0">{{ get_display_symbol() }}{{ "{:,.2f}".format(to_display_currency(budget.total_expected_expenses, budget.currency)) }}</h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6 mb-3">
+        <div class="card bg-info text-white h-100">
+            <div class="card-body">
+                <h6 class="card-subtitle mb-1">Savings Goal</h6>
+                <h4 class="card-title mb-0">{{ get_display_symbol() }}{{ "{:,.2f}".format(to_display_currency(total_savings_goal if total_savings_goal > 0 else budget.expected_savings, 'USD' if total_savings_goal > 0 else budget.currency)) }}</h4>
+                {% if total_savings_goal > 0 %}
+                <small class="opacity-75">From account goals</small>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6 mb-3">
+        <div class="card bg-warning text-dark h-100">
+            <div class="card-body">
+                <h6 class="card-subtitle mb-1">Investment Goal</h6>
+                <h4 class="card-title mb-0">{{ get_display_symbol() }}{{ "{:,.2f}".format(to_display_currency(total_investment_goal if total_investment_goal > 0 else budget.expected_investments, 'USD' if total_investment_goal > 0 else budget.currency)) }}</h4>
+                {% if total_investment_goal > 0 %}
+                <small>From account goals</small>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Budget Balance -->
+{% set effective_savings = total_savings_goal if total_savings_goal > 0 else budget.expected_savings %}
+{% set effective_investments = total_investment_goal if total_investment_goal > 0 else budget.expected_investments %}
+{% set effective_savings_currency = 'USD' if total_savings_goal > 0 else budget.currency %}
+{% set effective_investments_currency = 'USD' if total_investment_goal > 0 else budget.currency %}
+{% set calculated_balance = budget.expected_income - budget.total_expected_expenses - effective_savings - effective_investments %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card {% if calculated_balance >= 0 %}border-success{% else %}border-danger{% endif %}">
+            <div class="card-body text-center">
+                <h5>Expected Monthly Balance</h5>
+                <h3 class="{% if calculated_balance >= 0 %}text-success{% else %}text-danger{% endif %}">
+                    {{ get_display_symbol() }}{{ "{:,.2f}".format(to_display_currency(calculated_balance, budget.currency)) }}
+                </h3>
+                <small class="text-muted">Income - Expenses - Savings - Investments</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Budget Pie Chart -->
+    <div class="col-lg-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-pie-chart"></i> Budget Allocation</h5>
+            </div>
+            <div class="card-body">
+                {% if budget.items.count() > 0 or effective_savings > 0 or effective_investments > 0 %}
+                <canvas id="budgetPieChart" height="300"></canvas>
+                {% else %}
+                <p class="text-muted text-center">Add budget items to see the allocation chart.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Budget vs Actual Comparison -->
+    <div class="col-lg-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-bar-chart"></i> {{ month_name }} {{ year }} - Budget vs Actual</h5>
+            </div>
+            <div class="card-body">
+                <!-- Income -->
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span><strong>Income</strong></span>
+                        <span>
+                            {{ get_display_symbol() }}{{ "{:,.2f}".format(to_display_currency(actual_income, 'USD')) }} /
+                            {{ get_display_symbol() }}{{ "{:,.2f}".format(to_display_currency(budget.expected_income, budget.currency)) }}
+                        </span>
+                    </div>
+                    {% set income_pct = (actual_income / budget.expected_income * 100) if budget.expected_income > 0 else 0 %}
+                    <div class="progress" style="height: 20px;">
+                        <div class="progress-bar bg-success" style="width: {{ [income_pct, 100]|min }}%">
+                            {{ "{:.0f}".format(income_pct) }}%
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Savings -->
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span><strong>Savings</strong></span>
+                        <span>
+                            {{ get_display_symbol() }}{{ "{:,.2f}".format(to_display_currency(savings_contributions, 'USD')) }} /
+                            {{ get_display_symbol() }}{{ "{:,.2f}".format(to_display_currency(effective_savings, effective_savings_currency)) }}
+                        </span>
+                    </div>
+                    {% set savings_pct = (savings_contributions / effective_savings_usd * 100) if effective_savings_usd > 0 else 0 %}
+                    <div class="progress" style="height: 20px;">
+                        <div class="progress-bar bg-info" style="width: {{ [savings_pct, 100]|min }}%">
+                            {{ "{:.0f}".format(savings_pct) }}%
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Investments -->
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span><strong>Investments</strong></span>
+                        <span>
+                            {{ get_display_symbol() }}{{ "{:,.2f}".format(to_display_currency(investment_contributions, 'USD')) }} /
+                            {{ get_display_symbol() }}{{ "{:,.2f}".format(to_display_currency(effective_investments, effective_investments_currency)) }}
+                        </span>
+                    </div>
+                    {% set invest_pct = (investment_contributions / effective_investments_usd * 100) if effective_investments_usd > 0 else 0 %}
+                    <div class="progress" style="height: 20px;">
+                        <div class="progress-bar bg-warning" style="width: {{ [invest_pct, 100]|min }}%">
+                            {{ "{:.0f}".format(invest_pct) }}%
+                        </div>
+                    </div>
+                </div>
+
+                <hr>
+
+                <!-- Total Expenses -->
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span><strong>Total Expenses</strong></span>
+                        <span>
+                            {{ get_display_symbol() }}{{ "{:,.2f}".format(to_display_currency(total_actual_expenses, 'USD')) }} /
+                            {{ get_display_symbol() }}{{ "{:,.2f}".format(to_display_currency(budget.total_expected_expenses, budget.currency)) }}
+                        </span>
+                    </div>
+                    {% set expense_pct = (total_actual_expenses / budget.total_expected_expenses * 100) if budget.total_expected_expenses > 0 else 0 %}
+                    <div class="progress" style="height: 20px;">
+                        <div class="progress-bar {% if expense_pct > 100 %}bg-danger{% else %}bg-primary{% endif %}" style="width: {{ [expense_pct, 100]|min }}%">
+                            {{ "{:.0f}".format(expense_pct) }}%
+                        </div>
+                    </div>
+                    {% if expense_pct > 100 %}
+                    <small class="text-danger">Over budget by {{ get_display_symbol() }}{{ "{:,.2f}".format(to_display_currency(total_actual_expenses - budget.total_expected_expenses, 'USD')) }}</small>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Category-wise Budget Items -->
+<div class="row">
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-list-check"></i> Category Budgets</h5>
+            </div>
+            <div class="card-body">
+                {% if budget.items.count() > 0 %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Category</th>
+                                <th class="text-end">Budgeted</th>
+                                <th class="text-end">Actual</th>
+                                <th class="text-end">Remaining</th>
+                                <th>Progress</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in budget.items %}
+                            {% set actual = actual_expenses.get(item.category, 0) %}
+                            {% set remaining = item.amount - actual %}
+                            {% set pct = (actual / item.amount * 100) if item.amount > 0 else 0 %}
+                            <tr>
+                                <td>{{ item.category.replace('_', ' ')|title }}</td>
+                                <td class="text-end">{{ get_display_symbol() }}{{ "{:,.2f}".format(to_display_currency(item.amount, budget.currency)) }}</td>
+                                <td class="text-end">{{ get_display_symbol() }}{{ "{:,.2f}".format(to_display_currency(actual, 'USD')) }}</td>
+                                <td class="text-end {% if remaining < 0 %}text-danger{% else %}text-success{% endif %}">
+                                    {{ get_display_symbol() }}{{ "{:,.2f}".format(to_display_currency(remaining, budget.currency)) }}
+                                </td>
+                                <td style="width: 150px;">
+                                    <div class="progress" style="height: 15px;">
+                                        <div class="progress-bar {% if pct > 100 %}bg-danger{% elif pct > 80 %}bg-warning{% else %}bg-success{% endif %}"
+                                             style="width: {{ [pct, 100]|min }}%">
+                                            {{ "{:.0f}".format(pct) }}%
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('edit_budget_item', item_id=item.id) }}" class="btn btn-sm btn-outline-primary me-1">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <form action="{{ url_for('delete_budget_item', item_id=item.id) }}" method="POST" style="display:inline;">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger"
+                                                onclick="return confirm('Delete budget for {{ item.category.replace('_', ' ')|title }}?')">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted">No category budgets set yet. Add categories below.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Budget Item Form -->
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-plus-circle"></i> Add Category Budget</h5>
+            </div>
+            <div class="card-body">
+                <form action="{{ url_for('add_budget_item') }}" method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="mb-3">
+                        <label for="category" class="form-label">Category</label>
+                        <select name="category" id="category" class="form-select" required>
+                            <option value="">Select category...</option>
+                            <option value="__new__">+ Add New Category</option>
+                            {% for value, label in categories %}
+                            <option value="{{ value }}">{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3" id="newCategoryField" style="display: none;">
+                        <label for="new_category" class="form-label">New Category Name</label>
+                        <input type="text" name="new_category" id="new_category" class="form-control" placeholder="Enter category name">
+                    </div>
+                    <div class="mb-3">
+                        <label for="amount" class="form-label">Budget Amount ({{ get_display_symbol() }})</label>
+                        <input type="number" name="amount" id="amount" class="form-control" step="0.01" min="0.01" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-plus"></i> Add Budget
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Account-specific Investment/Savings Goals -->
+{% if investment_accounts or savings_accounts %}
+<div class="row mt-4">
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-bank"></i> Account Contribution Goals</h5>
+            </div>
+            <div class="card-body">
+                {% if account_goals %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Account</th>
+                                <th>Type</th>
+                                <th class="text-end">Goal</th>
+                                <th class="text-end">Actual</th>
+                                <th>Progress</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for account_id, goal in account_goals.items() %}
+                            {% set actual = account_contributions.get(account_id, 0) %}
+                            {% set pct = (actual / goal.monthly_goal * 100) if goal.monthly_goal > 0 else 0 %}
+                            <tr>
+                                <td>{{ goal.account.name }}</td>
+                                <td><span class="badge bg-{% if goal.account.account_type == 'investment' %}warning{% else %}info{% endif %}">{{ goal.account.account_type.replace('_', ' ')|title }}</span></td>
+                                <td class="text-end">{{ get_display_symbol() }}{{ "{:,.2f}".format(to_display_currency(goal.monthly_goal, goal.account.currency)) }}</td>
+                                <td class="text-end">{{ get_display_symbol() }}{{ "{:,.2f}".format(to_display_currency(actual, 'USD')) }}</td>
+                                <td style="width: 150px;">
+                                    <div class="progress" style="height: 15px;">
+                                        <div class="progress-bar {% if pct >= 100 %}bg-success{% elif pct >= 50 %}bg-info{% else %}bg-warning{% endif %}"
+                                             style="width: {{ [pct, 100]|min }}%">
+                                            {{ "{:.0f}".format(pct) }}%
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('edit_account_goal', goal_id=goal.id) }}" class="btn btn-sm btn-outline-primary me-1">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <form action="{{ url_for('delete_account_goal', goal_id=goal.id) }}" method="POST" style="display:inline;">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger"
+                                                onclick="return confirm('Delete goal for {{ goal.account.name }}?')">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted">No account goals set yet. Add goals to track contributions to specific savings and investment accounts.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Account Goal Form -->
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-plus-circle"></i> Add Account Goal</h5>
+            </div>
+            <div class="card-body">
+                <form action="{{ url_for('add_account_goal') }}" method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="mb-3">
+                        <label for="account_id" class="form-label">Account</label>
+                        <select name="account_id" id="account_id" class="form-select" required>
+                            <option value="">Select account...</option>
+                            {% if investment_accounts %}
+                            <optgroup label="Investment Accounts">
+                                {% for account in investment_accounts %}
+                                <option value="{{ account.id }}">{{ account.name }} ({{ account.currency }})</option>
+                                {% endfor %}
+                            </optgroup>
+                            {% endif %}
+                            {% if savings_accounts %}
+                            <optgroup label="Savings Accounts">
+                                {% for account in savings_accounts %}
+                                <option value="{{ account.id }}">{{ account.name }} ({{ account.currency }})</option>
+                                {% endfor %}
+                            </optgroup>
+                            {% endif %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="monthly_goal" class="form-label">Monthly Contribution Goal</label>
+                        <input type="number" name="monthly_goal" id="monthly_goal" class="form-control" step="0.01" min="0.01" required>
+                        <small class="form-text text-muted">Amount in the account's currency</small>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-plus"></i> Add Goal
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const categorySelect = document.getElementById('category');
+    const newCategoryField = document.getElementById('newCategoryField');
+    const newCategoryInput = document.getElementById('new_category');
+
+    if (categorySelect) {
+        categorySelect.addEventListener('change', function() {
+            if (this.value === '__new__') {
+                newCategoryField.style.display = 'block';
+                newCategoryInput.required = true;
+            } else {
+                newCategoryField.style.display = 'none';
+                newCategoryInput.required = false;
+            }
+        });
+    }
+});
+</script>
+
+{% endif %}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% if budget and (budget.items.count() > 0 or effective_savings > 0 or effective_investments > 0) %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const ctx = document.getElementById('budgetPieChart').getContext('2d');
+
+    const labels = [];
+    const data = [];
+    const colors = [
+        '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF',
+        '#FF9F40', '#7C4DFF', '#00E676', '#FF5252', '#448AFF',
+        '#E040FB', '#69F0AE', '#FF6E40', '#40C4FF', '#EA80FC'
+    ];
+
+    // Add budget items (expense categories)
+    {% for item in budget.items %}
+    labels.push('{{ item.category.replace("_", " ")|title }}');
+    data.push({{ item.amount }});
+    {% endfor %}
+
+    // Add individual account goals
+    {% for account_id, goal in account_goals.items() %}
+    labels.push('{{ goal.account.name }}');
+    data.push({{ goal.monthly_goal }});
+    {% endfor %}
+
+    // Fallback to manual savings/investments if no account goals defined
+    {% if total_savings_goal == 0 and budget.expected_savings > 0 %}
+    labels.push('Savings');
+    data.push({{ budget.expected_savings }});
+    {% endif %}
+
+    {% if total_investment_goal == 0 and budget.expected_investments > 0 %}
+    labels.push('Investments');
+    data.push({{ budget.expected_investments }});
+    {% endif %}
+
+    new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: data,
+                backgroundColor: colors.slice(0, data.length),
+                borderWidth: 2,
+                borderColor: '#fff'
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const value = context.raw;
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const pct = ((value / total) * 100).toFixed(1);
+                            return context.label + ': {{ get_display_symbol() }}' + value.toLocaleString(undefined, {minimumFractionDigits: 2}) + ' (' + pct + '%)';
+                        }
+                    }
+                }
+            }
+        }
+    });
+});
+</script>
+{% endif %}
+{% endblock %}

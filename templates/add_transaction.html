@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+
+{% block title %}Add Transaction - Finance Tracker{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card shadow">
+            <div class="card-header">
+                <h4 class="mb-0"><i class="bi bi-plus-circle"></i> Add Transaction</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST" novalidate>
+                    {{ form.hidden_tag() }}
+
+                    <div class="mb-3">
+                        <label for="account_id" class="form-label">Account</label>
+                        {{ form.account_id(class="form-select" + (" is-invalid" if form.account_id.errors else "")) }}
+                        {% for error in form.account_id.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Transaction Type</label>
+                        <div class="btn-group w-100" role="group">
+                            <input type="radio" class="btn-check" name="transaction_type" id="type-expense" value="expense" checked>
+                            <label class="btn btn-outline-danger" for="type-expense">
+                                <i class="bi bi-arrow-up-circle"></i> Expense
+                            </label>
+                            <input type="radio" class="btn-check" name="transaction_type" id="type-income" value="income">
+                            <label class="btn btn-outline-success" for="type-income">
+                                <i class="bi bi-arrow-down-circle"></i> Income
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="amount" class="form-label">Amount</label>
+                        <div class="input-group">
+                            <span class="input-group-text" id="amount-symbol">$</span>
+                            {{ form.amount(class="form-control" + (" is-invalid" if form.amount.errors else ""), placeholder="0.00", id="amount-input") }}
+                            {% for error in form.amount.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        <div class="form-text" id="amount-help">
+                            Enter amount as a positive number.
+                        </div>
+                    </div>
+
+                    <div class="mb-3" id="my-share-group">
+                        <label for="my_share" class="form-label">My Share <span class="text-muted">(optional)</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text" id="my-share-symbol">$</span>
+                            {{ form.my_share(class="form-control" + (" is-invalid" if form.my_share.errors else ""), placeholder="Leave empty if full amount is yours", id="my-share-input") }}
+                            {% for error in form.my_share.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        <div class="form-text">
+                            <i class="bi bi-info-circle"></i> If you paid for others (e.g., split a restaurant bill), enter only your portion here. This affects your monthly expense reports but not account balances.
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        {{ form.description(class="form-control" + (" is-invalid" if form.description.errors else ""), placeholder="e.g., Grocery shopping at Trader Joe's") }}
+                        {% for error in form.description.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="category" class="form-label">Category</label>
+                        {{ form.category(class="form-select" + (" is-invalid" if form.category.errors else ""), id="category-select") }}
+                        {% for error in form.category.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="mb-3" id="new-category-group" style="display: none;">
+                        <label for="new_category" class="form-label">New Category Name</label>
+                        {{ form.new_category(class="form-control" + (" is-invalid" if form.new_category.errors else ""), placeholder="e.g., Subscriptions, Pet Care, Gifts") }}
+                        {% for error in form.new_category.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                        {% endfor %}
+                        <div class="form-text">
+                            Enter a name for your new category.
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="transaction_date" class="form-label">Date</label>
+                        {{ form.transaction_date(class="form-control" + (" is-invalid" if form.transaction_date.errors else ""), type="date") }}
+                        {% for error in form.transaction_date.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-plus-circle"></i> Add Transaction
+                        </button>
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const categorySelect = document.getElementById('category-select');
+    const newCategoryGroup = document.getElementById('new-category-group');
+    const typeExpense = document.getElementById('type-expense');
+    const typeIncome = document.getElementById('type-income');
+    const myShareGroup = document.getElementById('my-share-group');
+    const amountHelp = document.getElementById('amount-help');
+    const accountSelect = document.getElementById('account_id');
+    const amountSymbol = document.getElementById('amount-symbol');
+    const myShareSymbol = document.getElementById('my-share-symbol');
+
+    // Account currency data from server
+    const accountCurrencies = {{ account_currencies | tojson | safe }};
+
+    function toggleNewCategory() {
+        if (categorySelect.value === '__new__') {
+            newCategoryGroup.style.display = 'block';
+        } else {
+            newCategoryGroup.style.display = 'none';
+        }
+    }
+
+    function toggleTransactionType() {
+        if (typeIncome.checked) {
+            myShareGroup.style.display = 'none';
+            amountHelp.textContent = 'Amount received (salary, refund, etc.)';
+        } else {
+            myShareGroup.style.display = 'block';
+            amountHelp.textContent = 'Amount spent. Use "My Share" if splitting with others.';
+        }
+    }
+
+    function updateCurrencySymbol() {
+        const accountId = accountSelect.value;
+        if (accountId && accountCurrencies[accountId]) {
+            const symbol = accountCurrencies[accountId].symbol;
+            amountSymbol.textContent = symbol;
+            myShareSymbol.textContent = symbol;
+        }
+    }
+
+    categorySelect.addEventListener('change', toggleNewCategory);
+    typeExpense.addEventListener('change', toggleTransactionType);
+    typeIncome.addEventListener('change', toggleTransactionType);
+    accountSelect.addEventListener('change', updateCurrencySymbol);
+
+    toggleNewCategory();
+    toggleTransactionType();
+    updateCurrencySymbol();
+});
+</script>
+{% endblock %}

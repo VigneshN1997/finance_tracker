@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Finance Tracker{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">Dashboard</h1>
+
+<!-- Summary Cards -->
+<div class="row mb-4">
+    <div class="col-md-4 mb-3">
+        <div class="card bg-primary text-white h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-subtitle mb-2 opacity-75">Total Balance ({{ get_display_currency() }})</h6>
+                        <h2 class="card-title mb-0">{{ get_display_symbol() }}{{ "{:,.2f}".format(to_display_currency(total_balance, 'USD')) }}</h2>
+                    </div>
+                    <i class="bi bi-wallet2 fs-1 opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3">
+        <div class="card bg-success text-white h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-subtitle mb-2 opacity-75">Accounts</h6>
+                        <h2 class="card-title mb-0">{{ accounts|length }}</h2>
+                    </div>
+                    <i class="bi bi-bank fs-1 opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3">
+        <div class="card bg-danger text-white h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-subtitle mb-2 opacity-75">This Month's Expenses</h6>
+                        <h2 class="card-title mb-0">{{ get_display_symbol() }}{{ "{:,.2f}".format(to_display_currency(monthly_expenses, 'USD')) }}</h2>
+                    </div>
+                    <i class="bi bi-graph-down fs-1 opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Accounts Overview -->
+    <div class="col-lg-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-bank"></i> Your Accounts</h5>
+                <a href="{{ url_for('add_account') }}" class="btn btn-sm btn-primary">
+                    <i class="bi bi-plus"></i> Add
+                </a>
+            </div>
+            <div class="card-body">
+                {% if accounts %}
+                <div class="list-group list-group-flush">
+                    {% for account in accounts %}
+                    <a href="{{ url_for('account_detail', account_id=account.id) }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>{{ account.name }}</strong>
+                            <br>
+                            <small class="text-muted">
+                                {% if account.account_type == 'credit_card' %}
+                                    <i class="bi bi-credit-card"></i>
+                                {% elif account.account_type == 'savings' %}
+                                    <i class="bi bi-piggy-bank"></i>
+                                {% elif account.account_type == 'loan' %}
+                                    <i class="bi bi-car-front"></i>
+                                {% elif account.account_type == 'investment' %}
+                                    <i class="bi bi-graph-up-arrow"></i>
+                                {% else %}
+                                    <i class="bi bi-cash-stack"></i>
+                                {% endif %}
+                                {{ account.account_type.replace('_', ' ').title() }}
+                            </small>
+                        </div>
+                        <span class="badge {% if account.current_balance >= 0 %}bg-success{% else %}bg-danger{% endif %} rounded-pill">
+                            {{ display_value(account.current_balance, account.currency) }}
+                        </span>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted text-center my-4">
+                    No accounts yet. <a href="{{ url_for('add_account') }}">Create your first account</a>
+                </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Transactions -->
+    <div class="col-lg-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-clock-history"></i> Recent Transactions</h5>
+                <a href="{{ url_for('add_transaction') }}" class="btn btn-sm btn-primary">
+                    <i class="bi bi-plus"></i> Add
+                </a>
+            </div>
+            <div class="card-body">
+                {% if recent_transactions %}
+                <div class="list-group list-group-flush">
+                    {% for transaction in recent_transactions %}
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>{{ transaction.description }}</strong>
+                            <br>
+                            <small class="text-muted">
+                                {{ transaction.transaction_date.strftime('%b %d, %Y') }} &middot;
+                                {{ transaction.category.replace('_', ' ').title() }}
+                            </small>
+                        </div>
+                        <span class="{% if transaction.amount >= 0 %}text-success{% else %}text-danger{% endif %}">
+                            {% if transaction.amount >= 0 %}+{% endif %}{{ display_value(transaction.amount, transaction.account.currency) }}
+                        </span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted text-center my-4">
+                    No transactions yet. <a href="{{ url_for('add_transaction') }}">Add your first transaction</a>
+                </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
