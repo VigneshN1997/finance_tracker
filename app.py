@@ -729,6 +729,128 @@ def monthly_report():
                            investment_contributions=investment_contributions)
 
 
+@app.route('/reports/monthly/category-transactions')
+@login_required
+def monthly_category_transactions() -> 'flask.Response':
+    """Return transactions for a specific category in a given month as JSON."""
+    category = request.args.get('category', '')
+    month = request.args.get('month', type=int)
+    year = request.args.get('year', type=int)
+
+    accounts = Account.query.filter_by(user_id=current_user.id).all()
+    account_ids = [a.id for a in accounts]
+    account_map = {a.id: a for a in accounts}
+    account_currency_map = {a.id: a.currency for a in accounts}
+
+    transactions = Transaction.query.filter(
+        Transaction.account_id.in_(account_ids),
+        Transaction.category == category,
+        extract('month', Transaction.transaction_date) == month,
+        extract('year', Transaction.transaction_date) == year
+    ).order_by(Transaction.transaction_date.desc()).all()
+
+    result = []
+    for t in transactions:
+        personal = t.personal_amount
+        account_currency = account_currency_map.get(t.account_id, 'USD')
+        amount_usd = convert_currency(abs(personal), account_currency, 'USD') if account_currency == 'INR' else abs(personal)
+        result.append({
+            'date': t.transaction_date.strftime('%b %d, %Y'),
+            'description': t.description,
+            'account': account_map[t.account_id].name,
+            'amount': amount_usd,
+        })
+
+    return jsonify(result)
+
+
+@app.route('/reports/monthly/summary-transactions')
+@login_required
+def monthly_summary_transactions() -> 'flask.Response':
+    """Return income or expense transactions for a given month as JSON."""
+    txn_type = request.args.get('type', '')  # 'income' or 'expenses'
+    month = request.args.get('month', type=int)
+    year = request.args.get('year', type=int)
+
+    if txn_type not in ('income', 'expenses'):
+        return jsonify([])
+
+    accounts = Account.query.filter_by(user_id=current_user.id).all()
+    account_ids = [a.id for a in accounts]
+    account_map = {a.id: a for a in accounts}
+    account_currency_map = {a.id: a.currency for a in accounts}
+
+    monthly_transactions = Transaction.query.filter(
+        Transaction.account_id.in_(account_ids),
+        Transaction.category != 'transfer',
+        extract('month', Transaction.transaction_date) == month,
+        extract('year', Transaction.transaction_date) == year
+    ).order_by(Transaction.transaction_date.desc()).all()
+
+    result = []
+    for t in monthly_transactions:
+        personal = t.personal_amount
+        account_currency = account_currency_map.get(t.account_id, 'USD')
+        amount_usd = convert_currency(abs(personal), account_currency, 'USD') if account_currency == 'INR' else abs(personal)
+
+        if txn_type == 'income' and personal > 0:
+            result.append({
+                'date': t.transaction_date.strftime('%b %d, %Y'),
+                'description': t.description,
+                'account': account_map[t.account_id].name,
+                'category': t.category.replace('_', ' ').title(),
+                'amount': amount_usd,
+            })
+        elif txn_type == 'expenses' and personal < 0:
+            result.append({
+                'date': t.transaction_date.strftime('%b %d, %Y'),
+                'description': t.description,
+                'account': account_map[t.account_id].name,
+                'category': t.category.replace('_', ' ').title(),
+                'amount': amount_usd,
+            })
+
+    return jsonify(result)
+
+
+@app.route('/reports/monthly/contribution-transactions')
+@login_required
+def monthly_contribution_transactions() -> 'flask.Response':
+    """Return savings or investment transfer transactions for a given month as JSON."""
+    account_type = request.args.get('type', '')  # 'savings' or 'investment'
+    month = request.args.get('month', type=int)
+    year = request.args.get('year', type=int)
+
+    if account_type not in ('savings', 'investment'):
+        return jsonify([])
+
+    accounts = Account.query.filter_by(user_id=current_user.id, account_type=account_type).all()
+    account_ids = [a.id for a in accounts]
+    account_map = {a.id: a for a in accounts}
+    account_currency_map = {a.id: a.currency for a in accounts}
+
+    transactions = Transaction.query.filter(
+        Transaction.account_id.in_(account_ids),
+        Transaction.amount > 0,
+        Transaction.category == 'transfer',
+        extract('month', Transaction.transaction_date) == month,
+        extract('year', Transaction.transaction_date) == year
+    ).order_by(Transaction.transaction_date.desc()).all()
+
+    result = []
+    for t in transactions:
+        account_currency = account_currency_map.get(t.account_id, 'USD')
+        amount_usd = convert_currency(t.amount, account_currency, 'USD') if account_currency == 'INR' else t.amount
+        result.append({
+            'date': t.transaction_date.strftime('%b %d, %Y'),
+            'description': t.description,
+            'account': account_map[t.account_id].name,
+            'amount': amount_usd,
+        })
+
+    return jsonify(result)
+
+
 # ============ Currency Summary ============
 
 @app.route('/currency-summary')

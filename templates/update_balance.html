@@ -29,7 +29,7 @@
                         <div class="input-group">
                             <span class="input-group-text" id="currency-symbol">$</span>
                             {{ form.new_balance(class="form-control" + (" is-invalid" if form.new_balance.errors else ""), placeholder="0.00") }}
-                            {{ form.input_currency(class="form-select", style="max-width: 120px;", id="input-currency") }}
+                            {{ form.input_currency(class="form-select ts-select", style="max-width: 120px;", id="input-currency") }}
                             {% for error in form.new_balance.errors %}
                                 <div class="invalid-feedback">{{ error }}</div>
                             {% endfor %}

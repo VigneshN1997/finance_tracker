@@ -15,7 +15,7 @@
 
                     <div class="mb-3">
                         <label for="from_account_id" class="form-label">From Account</label>
-                        {{ form.from_account_id(class="form-select" + (" is-invalid" if form.from_account_id.errors else "")) }}
+                        {{ form.from_account_id(class="form-select ts-select" + (" is-invalid" if form.from_account_id.errors else "")) }}
                         {% for error in form.from_account_id.errors %}
                             <div class="invalid-feedback">{{ error }}</div>
                         {% endfor %}
@@ -27,7 +27,7 @@
 
                     <div class="mb-3">
                         <label for="to_account_id" class="form-label">To Account</label>
-                        {{ form.to_account_id(class="form-select" + (" is-invalid" if form.to_account_id.errors else "")) }}
+                        {{ form.to_account_id(class="form-select ts-select" + (" is-invalid" if form.to_account_id.errors else "")) }}
                         {% for error in form.to_account_id.errors %}
                             <div class="invalid-feedback">{{ error }}</div>
                         {% endfor %}
@@ -57,7 +57,7 @@
 
                     <div class="mb-3">
                         <label for="transfer_date" class="form-label">Date</label>
-                        {{ form.transfer_date(class="form-control" + (" is-invalid" if form.transfer_date.errors else ""), type="date") }}
+                        {{ form.transfer_date(class="form-control fp-date" + (" is-invalid" if form.transfer_date.errors else "")) }}
                         {% for error in form.transfer_date.errors %}
                             <div class="invalid-feedback">{{ error }}</div>
                         {% endfor %}

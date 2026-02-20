@@ -8,40 +8,40 @@
 <!-- Summary Cards -->
 <div class="row mb-4">
     <div class="col-md-4 mb-3">
-        <div class="card bg-primary text-white h-100">
+        <div class="card stat-card stat-primary h-100">
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <h6 class="card-subtitle mb-2 opacity-75">Total Balance ({{ get_display_currency() }})</h6>
+                        <h6 class="card-subtitle mb-2">Total Balance ({{ get_display_currency() }})</h6>
                         <h2 class="card-title mb-0">{{ get_display_symbol() }}{{ "{:,.2f}".format(to_display_currency(total_balance, 'USD')) }}</h2>
                     </div>
-                    <i class="bi bi-wallet2 fs-1 opacity-50"></i>
+                    <div class="stat-card-icon icon-primary"><i class="bi bi-wallet2"></i></div>
                 </div>
             </div>
         </div>
     </div>
     <div class="col-md-4 mb-3">
-        <div class="card bg-success text-white h-100">
+        <div class="card stat-card stat-success h-100">
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <h6 class="card-subtitle mb-2 opacity-75">Accounts</h6>
+                        <h6 class="card-subtitle mb-2">Accounts</h6>
                         <h2 class="card-title mb-0">{{ accounts|length }}</h2>
                     </div>
-                    <i class="bi bi-bank fs-1 opacity-50"></i>
+                    <div class="stat-card-icon icon-success"><i class="bi bi-bank"></i></div>
                 </div>
             </div>
         </div>
     </div>
     <div class="col-md-4 mb-3">
-        <div class="card bg-danger text-white h-100">
+        <div class="card stat-card stat-danger h-100">
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <h6 class="card-subtitle mb-2 opacity-75">This Month's Expenses</h6>
+                        <h6 class="card-subtitle mb-2">This Month's Expenses</h6>
                         <h2 class="card-title mb-0">{{ get_display_symbol() }}{{ "{:,.2f}".format(to_display_currency(monthly_expenses, 'USD')) }}</h2>
                     </div>
-                    <i class="bi bi-graph-down fs-1 opacity-50"></i>
+                    <div class="stat-card-icon icon-danger"><i class="bi bi-graph-down"></i></div>
                 </div>
             </div>
         </div>

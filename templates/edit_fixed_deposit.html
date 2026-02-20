@@ -31,7 +31,7 @@
 
                     <div class="mb-3">
                         <label for="account_id" class="form-label">Linked Account</label>
-                        {{ form.account_id(class="form-select" + (" is-invalid" if form.account_id.errors else "")) }}
+                        {{ form.account_id(class="form-select ts-select" + (" is-invalid" if form.account_id.errors else "")) }}
                         {% for error in form.account_id.errors %}
                             <div class="invalid-feedback">{{ error }}</div>
                         {% endfor %}

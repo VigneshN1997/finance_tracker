@@ -41,40 +41,57 @@
 <!-- Summary Cards -->
 <div class="row mb-4">
     <div class="col-md-4 mb-3">
-        <div class="card bg-success text-white h-100">
+        <div class="card stat-card stat-success h-100 summary-card" role="button"
+             data-type="income" data-label="Total Income" style="cursor:pointer;">
             <div class="card-body">
-                <h6 class="card-subtitle mb-2 opacity-75">Total Income</h6>
-                <h2 class="card-title mb-0">{{ get_display_symbol() }}{{ "{:,.2f}".format(to_display_currency(total_income, 'USD')) }}</h2>
-                {% if budget and budget.expected_income > 0 %}
-                <small class="opacity-75">
-                    Budget: {{ get_display_symbol() }}{{ "{:,.2f}".format(to_display_currency(budget.expected_income, budget.currency)) }}
-                    ({{ "%.0f"|format(total_income / budget.expected_income * 100) }}%)
-                </small>
-                {% endif %}
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-subtitle mb-2">Total Income <i class="bi bi-chevron-right small"></i></h6>
+                        <h2 class="card-title mb-0">{{ get_display_symbol() }}{{ "{:,.2f}".format(to_display_currency(total_income, 'USD')) }}</h2>
+                        {% if budget and budget.expected_income > 0 %}
+                        <small class="text-muted">
+                            Budget: {{ get_display_symbol() }}{{ "{:,.2f}".format(to_display_currency(budget.expected_income, budget.currency)) }}
+                            ({{ "%.0f"|format(total_income / budget.expected_income * 100) }}%)
+                        </small>
+                        {% endif %}
+                    </div>
+                    <div class="stat-card-icon icon-success"><i class="bi bi-arrow-down-circle"></i></div>
+                </div>
             </div>
         </div>
     </div>
     <div class="col-md-4 mb-3">
-        <div class="card bg-danger text-white h-100">
+        <div class="card stat-card stat-danger h-100 summary-card" role="button"
+             data-type="expenses" data-label="Total Expenses" style="cursor:pointer;">
             <div class="card-body">
-                <h6 class="card-subtitle mb-2 opacity-75">Total Expenses</h6>
-                <h2 class="card-title mb-0">{{ get_display_symbol() }}{{ "{:,.2f}".format(to_display_currency(total_expenses, 'USD')) }}</h2>
-                {% if budget and budget.total_expected_expenses > 0 %}
-                <small class="opacity-75">
-                    Budget: {{ get_display_symbol() }}{{ "{:,.2f}".format(to_display_currency(budget.total_expected_expenses, budget.currency)) }}
-                    ({{ "%.0f"|format(total_expenses / budget.total_expected_expenses * 100) }}%)
-                </small>
-                {% endif %}
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-subtitle mb-2">Total Expenses <i class="bi bi-chevron-right small"></i></h6>
+                        <h2 class="card-title mb-0">{{ get_display_symbol() }}{{ "{:,.2f}".format(to_display_currency(total_expenses, 'USD')) }}</h2>
+                        {% if budget and budget.total_expected_expenses > 0 %}
+                        <small class="text-muted">
+                            Budget: {{ get_display_symbol() }}{{ "{:,.2f}".format(to_display_currency(budget.total_expected_expenses, budget.currency)) }}
+                            ({{ "%.0f"|format(total_expenses / budget.total_expected_expenses * 100) }}%)
+                        </small>
+                        {% endif %}
+                    </div>
+                    <div class="stat-card-icon icon-danger"><i class="bi bi-arrow-up-circle"></i></div>
+                </div>
             </div>
         </div>
     </div>
     <div class="col-md-4 mb-3">
-        <div class="card {% if net >= 0 %}bg-primary{% else %}bg-warning{% endif %} text-white h-100">
+        <div class="card stat-card {% if net >= 0 %}stat-primary{% else %}stat-warning{% endif %} h-100">
             <div class="card-body">
-                <h6 class="card-subtitle mb-2 opacity-75">Net (Income - Expenses)</h6>
-                <h2 class="card-title mb-0">
-                    {% if net >= 0 %}+{% endif %}{{ get_display_symbol() }}{{ "{:,.2f}".format(to_display_currency(net, 'USD')) }}
-                </h2>
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-subtitle mb-2">Net (Income - Expenses)</h6>
+                        <h2 class="card-title mb-0">
+                            {% if net >= 0 %}+{% endif %}{{ get_display_symbol() }}{{ "{:,.2f}".format(to_display_currency(net, 'USD')) }}
+                        </h2>
+                    </div>
+                    <div class="stat-card-icon {% if net >= 0 %}icon-primary{% else %}icon-warning{% endif %}"><i class="bi bi-calculator"></i></div>
+                </div>
             </div>
         </div>
     </div>
@@ -86,7 +103,12 @@
     <div class="col-md-6 mb-3">
         <div class="card h-100">
             <div class="card-body">
-                <h5 class="card-title"><i class="bi bi-piggy-bank text-info"></i> Savings Progress</h5>
+                <h5 class="card-title">
+                    <button type="button" class="btn btn-link p-0 text-start contribution-link"
+                            data-type="savings" data-label="Savings">
+                        <i class="bi bi-piggy-bank text-info"></i> Savings Progress <i class="bi bi-chevron-right small"></i>
+                    </button>
+                </h5>
                 <div class="d-flex justify-content-between mb-2">
                     <span>Contributed this month</span>
                     <span>{{ get_display_symbol() }}{{ "{:,.2f}".format(to_display_currency(savings_contributions, 'USD')) }} / {{ get_display_symbol() }}{{ "{:,.2f}".format(to_display_currency(budget.expected_savings, budget.currency)) }}</span>
@@ -109,7 +131,12 @@
     <div class="col-md-6 mb-3">
         <div class="card h-100">
             <div class="card-body">
-                <h5 class="card-title"><i class="bi bi-graph-up-arrow text-warning"></i> Investment Progress</h5>
+                <h5 class="card-title">
+                    <button type="button" class="btn btn-link p-0 text-start contribution-link"
+                            data-type="investment" data-label="Investment">
+                        <i class="bi bi-graph-up-arrow text-warning"></i> Investment Progress <i class="bi bi-chevron-right small"></i>
+                    </button>
+                </h5>
                 <div class="d-flex justify-content-between mb-2">
                     <span>Contributed this month</span>
                     <span>{{ get_display_symbol() }}{{ "{:,.2f}".format(to_display_currency(investment_contributions, 'USD')) }} / {{ get_display_symbol() }}{{ "{:,.2f}".format(to_display_currency(budget.expected_investments, budget.currency)) }}</span>
@@ -160,7 +187,13 @@
                 <tbody>
                     {% for expense in expenses %}
                     <tr>
-                        <td>{{ expense.category }}</td>
+                        <td>
+                            <button type="button" class="btn btn-link p-0 text-start category-link"
+                                    data-category="{{ expense.category_key }}"
+                                    data-category-label="{{ expense.category }}">
+                                {{ expense.category }} <i class="bi bi-chevron-right small"></i>
+                            </button>
+                        </td>
                         <td class="text-end text-danger">{{ get_display_symbol() }}{{ "{:,.2f}".format(to_display_currency(expense.amount, 'USD')) }}</td>
                         {% if budget %}
                         <td class="text-end">
@@ -237,4 +270,107 @@
     <i class="bi bi-lightbulb"></i> <strong>Tip:</strong> Set up a <a href="{{ url_for('edit_budget') }}" class="alert-link">budget</a> to compare your spending against your goals.
 </div>
 {% endif %}
+
+<!-- Category Transactions Modal -->
+<div class="modal fade" id="categoryModal" tabindex="-1" aria-labelledby="categoryModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="categoryModalLabel"></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="categoryModalSpinner" class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+                <div id="categoryModalContent" class="d-none">
+                    <table class="table table-sm table-hover">
+                        <thead class="table-light" id="categoryModalHead"></thead>
+                        <tbody id="categoryModalBody"></tbody>
+                        <tfoot class="table-light" id="categoryModalFoot"></tfoot>
+                    </table>
+                </div>
+                <div id="categoryModalEmpty" class="text-center py-4 d-none">
+                    <p class="text-muted">No transactions found.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function openCategoryModal(label, fetchUrl, showCategory) {
+    var modal = new bootstrap.Modal(document.getElementById('categoryModal'));
+    document.getElementById('categoryModalLabel').textContent = label;
+    document.getElementById('categoryModalSpinner').classList.remove('d-none');
+    document.getElementById('categoryModalContent').classList.add('d-none');
+    document.getElementById('categoryModalEmpty').classList.add('d-none');
+
+    var cols = showCategory ? 4 : 3;
+    document.getElementById('categoryModalHead').innerHTML = '<tr>' +
+        '<th>Date</th><th>Description</th>' +
+        (showCategory ? '<th>Category</th>' : '') +
+        '<th>Account</th><th class="text-end">Amount</th></tr>';
+    document.getElementById('categoryModalFoot').innerHTML = '<tr>' +
+        '<th colspan="' + cols + '">Total</th>' +
+        '<th class="text-end text-danger" id="categoryModalTotal"></th></tr>';
+
+    modal.show();
+
+    fetch(fetchUrl)
+        .then(function(res) { return res.json(); })
+        .then(function(transactions) {
+            document.getElementById('categoryModalSpinner').classList.add('d-none');
+            if (transactions.length === 0) {
+                document.getElementById('categoryModalEmpty').classList.remove('d-none');
+                return;
+            }
+            var tbody = document.getElementById('categoryModalBody');
+            tbody.innerHTML = '';
+            var total = 0;
+            transactions.forEach(function(t) {
+                total += t.amount;
+                var row = '<tr>' +
+                    '<td>' + t.date + '</td>' +
+                    '<td>' + t.description + '</td>' +
+                    (showCategory ? '<td class="text-muted">' + t.category + '</td>' : '') +
+                    '<td class="text-muted">' + t.account + '</td>' +
+                    '<td class="text-end text-danger">{{ get_display_symbol() }}' + t.amount.toFixed(2) + '</td>' +
+                    '</tr>';
+                tbody.insertAdjacentHTML('beforeend', row);
+            });
+            document.getElementById('categoryModalTotal').textContent = '{{ get_display_symbol() }}' + total.toFixed(2);
+            document.getElementById('categoryModalContent').classList.remove('d-none');
+        });
+}
+
+document.querySelectorAll('.summary-card').forEach(function(card) {
+    card.addEventListener('click', function() {
+        var type = this.dataset.type;
+        var label = this.dataset.label + ' — {{ month_name }} {{ year }}';
+        var url = '/reports/monthly/summary-transactions?type=' + encodeURIComponent(type) + '&month={{ month }}&year={{ year }}';
+        openCategoryModal(label, url, true);
+    });
+});
+
+document.querySelectorAll('.contribution-link').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+        var type = this.dataset.type;
+        var label = this.dataset.label + ' Contributions — {{ month_name }} {{ year }}';
+        var url = '/reports/monthly/contribution-transactions?type=' + encodeURIComponent(type) + '&month={{ month }}&year={{ year }}';
+        openCategoryModal(label, url, false);
+    });
+});
+
+document.querySelectorAll('.category-link').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+        var category = this.dataset.category;
+        var label = this.dataset.categoryLabel + ' Transactions — {{ month_name }} {{ year }}';
+        var url = '/reports/monthly/category-transactions?category=' + encodeURIComponent(category) + '&month={{ month }}&year={{ year }}';
+        openCategoryModal(label, url, false);
+    });
+});
+</script>
 {% endblock %}

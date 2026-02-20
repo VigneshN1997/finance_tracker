@@ -15,7 +15,7 @@
 
                     <div class="mb-3">
                         <label for="account_id" class="form-label">Account</label>
-                        {{ form.account_id(class="form-select" + (" is-invalid" if form.account_id.errors else "")) }}
+                        {{ form.account_id(class="form-select ts-select" + (" is-invalid" if form.account_id.errors else "")) }}
                         {% for error in form.account_id.errors %}
                             <div class="invalid-feedback">{{ error }}</div>
                         {% endfor %}
@@ -49,14 +49,14 @@
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label for="start_date" class="form-label">Start Date</label>
-                            {{ form.start_date(class="form-control" + (" is-invalid" if form.start_date.errors else "")) }}
+                            {{ form.start_date(class="form-control fp-date" + (" is-invalid" if form.start_date.errors else "")) }}
                             {% for error in form.start_date.errors %}
                                 <div class="invalid-feedback">{{ error }}</div>
                             {% endfor %}
                         </div>
                         <div class="col-md-6 mb-3">
                             <label for="maturity_date" class="form-label">Maturity Date</label>
-                            {{ form.maturity_date(class="form-control" + (" is-invalid" if form.maturity_date.errors else "")) }}
+                            {{ form.maturity_date(class="form-control fp-date" + (" is-invalid" if form.maturity_date.errors else "")) }}
                             {% for error in form.maturity_date.errors %}
                                 <div class="invalid-feedback">{{ error }}</div>
                             {% endfor %}

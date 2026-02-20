@@ -8,31 +8,44 @@
 <!-- Net Worth Summary -->
 <div class="row mb-4">
     <div class="col-lg-4 mb-3">
-        <div class="card h-100 {% if net_worth_usd >= 0 %}bg-success{% else %}bg-danger{% endif %} text-white">
-            <div class="card-body text-center">
-                <h6 class="card-subtitle mb-2 opacity-75">Net Worth ({{ get_display_currency() }})</h6>
-                <h1 class="display-4 mb-1">{{ get_display_symbol() }}{{
-                    "{:,.2f}".format(to_display_currency(net_worth_usd, 'USD')) }}</h1>
+        <div class="card h-100 stat-card {% if net_worth_usd >= 0 %}stat-success{% else %}stat-danger{% endif %}">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-subtitle mb-2">Net Worth ({{ get_display_currency() }})</h6>
+                        <h1 class="card-title display-5 mb-1">{{ get_display_symbol() }}{{
+                            "{:,.2f}".format(to_display_currency(net_worth_usd, 'USD')) }}</h1>
+                    </div>
+                    <div class="stat-card-icon {% if net_worth_usd >= 0 %}icon-success{% else %}icon-danger{% endif %}"><i class="bi bi-gem"></i></div>
+                </div>
             </div>
         </div>
     </div>
     <div class="col-lg-4 mb-3">
-        <div class="card h-100 bg-primary text-white">
-            <div class="card-body text-center">
-                <h6 class="card-subtitle mb-2 opacity-75">Total Assets</h6>
-                <h2 class="mb-0">{{ get_display_symbol() }}{{ "{:,.2f}".format(to_display_currency(total_assets, 'USD'))
-                    }}</h2>
-                <small class="opacity-75">Checking + Savings + Investments</small>
+        <div class="card h-100 stat-card stat-primary">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-subtitle mb-2">Total Assets</h6>
+                        <h2 class="card-title mb-0">{{ get_display_symbol() }}{{ "{:,.2f}".format(to_display_currency(total_assets, 'USD')) }}</h2>
+                        <small class="text-muted">Checking + Savings + Investments</small>
+                    </div>
+                    <div class="stat-card-icon icon-primary"><i class="bi bi-bank"></i></div>
+                </div>
             </div>
         </div>
     </div>
     <div class="col-lg-4 mb-3">
-        <div class="card h-100 bg-danger text-white">
-            <div class="card-body text-center">
-                <h6 class="card-subtitle mb-2 opacity-75">Total Liabilities</h6>
-                <h2 class="mb-0">{{ get_display_symbol() }}{{ "{:,.2f}".format(to_display_currency(total_liabilities,
-                    'USD')) }}</h2>
-                <small class="opacity-75">Credit Cards + Loans</small>
+        <div class="card h-100 stat-card stat-danger">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-subtitle mb-2">Total Liabilities</h6>
+                        <h2 class="card-title mb-0">{{ get_display_symbol() }}{{ "{:,.2f}".format(to_display_currency(total_liabilities, 'USD')) }}</h2>
+                        <small class="text-muted">Credit Cards + Loans</small>
+                    </div>
+                    <div class="stat-card-icon icon-danger"><i class="bi bi-credit-card"></i></div>
+                </div>
             </div>
         </div>
     </div>

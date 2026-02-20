@@ -31,7 +31,7 @@
 
                     <div class="mb-3">
                         <label for="account_type" class="form-label">Account Type</label>
-                        {{ form.account_type(class="form-select" + (" is-invalid" if form.account_type.errors else "")) }}
+                        {{ form.account_type(class="form-select ts-select" + (" is-invalid" if form.account_type.errors else "")) }}
                         {% for error in form.account_type.errors %}
                             <div class="invalid-feedback">{{ error }}</div>
                         {% endfor %}
@@ -39,7 +39,7 @@
 
                     <div class="mb-3">
                         <label for="currency" class="form-label">Country / Currency</label>
-                        {{ form.currency(class="form-select" + (" is-invalid" if form.currency.errors else "")) }}
+                        {{ form.currency(class="form-select ts-select" + (" is-invalid" if form.currency.errors else "")) }}
                         {% for error in form.currency.errors %}
                             <div class="invalid-feedback">{{ error }}</div>
                         {% endfor %}

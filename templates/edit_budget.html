@@ -26,7 +26,7 @@
 
                     <div class="mb-3">
                         {{ form.currency.label(class="form-label") }}
-                        {{ form.currency(class="form-select" + (" is-invalid" if form.currency.errors else "")) }}
+                        {{ form.currency(class="form-select ts-select" + (" is-invalid" if form.currency.errors else "")) }}
                         {% for error in form.currency.errors %}
                         <div class="invalid-feedback">{{ error }}</div>
                         {% endfor %}
