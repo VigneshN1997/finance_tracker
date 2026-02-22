@@ -1,3 +1,6 @@
+import os
+import threading
+import time
 from datetime import datetime, date
 from flask import Flask, render_template, redirect, url_for, flash, request, jsonify
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
@@ -175,12 +178,15 @@ def dashboard():
     monthly_transactions = Transaction.query.filter(
         Transaction.account_id.in_(account_ids),
         Transaction.amount < 0,
+        Transaction.category != 'transfer',
         extract('month', Transaction.transaction_date) == today.month,
         extract('year', Transaction.transaction_date) == today.year
     ).all()
     monthly_expenses = 0
     for t in monthly_transactions:
         amount = t.personal_amount
+        if amount >= 0:
+            continue
         if account_currency_map.get(t.account_id, 'USD') == 'INR':
             amount = convert_currency(amount, 'INR', 'USD')
         monthly_expenses += amount
@@ -1536,6 +1542,45 @@ def mark_fd_matured(fd_id: int):
 
     flash(f'Fixed deposit marked as matured. Maturity value: ₹{fd.maturity_value:,.2f}', 'success')
     return redirect(url_for('fixed_deposits'))
+
+
+# ============ Scheduled Backup ============
+
+def _start_backup_scheduler() -> None:
+    """Start a daemon thread that creates a backup every 24 hours.
+
+    The thread wakes up hourly and checks whether 24 hours have elapsed since
+    the last backup, so app restarts don't unnecessarily reset the schedule.
+    """
+    from backup import backup_database, get_last_backup_time
+
+    BACKUP_INTERVAL_SECS = 24 * 60 * 60
+    CHECK_INTERVAL_SECS = 60 * 60  # wake up every hour to check
+
+    def _run() -> None:
+        while True:
+            time.sleep(CHECK_INTERVAL_SECS)
+            try:
+                last = get_last_backup_time()
+                elapsed = (
+                    (datetime.now() - last).total_seconds()
+                    if last is not None
+                    else BACKUP_INTERVAL_SECS + 1  # no backup yet → run now
+                )
+                if elapsed >= BACKUP_INTERVAL_SECS:
+                    path = backup_database()
+                    app.logger.info('Scheduled backup created: %s', path.name)
+            except Exception as exc:
+                app.logger.error('Scheduled backup failed: %s', exc)
+
+    t = threading.Thread(target=_run, name='backup-scheduler', daemon=True)
+    t.start()
+    app.logger.info('Backup scheduler started (interval: 24 h, check: 1 h)')
+
+
+# Avoid double-starting under Werkzeug's debug reloader
+if not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
+    _start_backup_scheduler()
 
 
 if __name__ == '__main__':

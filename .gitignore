@@ -48,3 +48,6 @@ build/
 
 reset_password.py
 recreate_fixed_deposits.py
+
+# Database backups (local only, contain user data)
+backups/
